@@ -1,0 +1,12 @@
+UDP server socket created
+Socket binded to ('s-MacBook-puro.local', 8888)
+From ('10.12.143.19', 56154) received: b'TEST:::Starting connection'
+From ('10.12.143.19', 56154) received: b'REGISTER:::0:::f418xgH5Rc:::s-MacBook-puro.local:::56154'
+To ('s-MacBook-puro.local', 56154) sent: b'REGISTERED:::0:::f418xgH5Rc:::s-MacBook-puro.local:::56154'
+From ('10.12.143.19', 56154) received: b'OFFER:::1:::f418xgH5Rc:::s-MacBook-puro.local::::::12'
+To ('s-MacBook-puro.local', 56154) sent: b'OFFER-CONF:::1:::0::::::12'
+TCP server socket created
+Socket binded to ('s-MacBook-puro.local', 58762)
+To ('s-MacBook-puro.local', 56154) sent: b"NOT-SOLD:::0:::b'NO_VALID_BIDS'"
+Closing socket
+Closing connections to this TCP server

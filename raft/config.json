@@ -1,0 +1,11 @@
+{
+    "datacenters": {
+        "1": { "port": 12348 },
+        "2": { "port": 12349 },
+        "3": { "port": 12350 }
+    },
+    "messageDelay": 0,
+    "total_ticket": 100,
+    "T": 3,
+    "heartbeat_timeout": 1
+}
