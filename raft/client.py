@@ -1,5 +1,5 @@
 #	client 
-#	Implemented by Zhijing@Mar. 7
+
 import json
 import socket
 import datetime
@@ -50,14 +50,14 @@ def Interface_cmd(c):
     for i in range(1, len(datacenter)+1):
         datacenter_list.append(datacenter[str(i)]['port'])
         print('datacenter: '+ str(datacenter[str(i)]['port']))
-    cmd = raw_input('Please choose a server to connect... or exit...\t')
+    cmd = input('Please choose a server to connect... or exit...\t')
     if cmd.startswith('exit'):
         choice = False
     else:
         server_selected = int(cmd)
     while choice:
         
-        command = raw_input('Command: buy {numberOfTicket} / show / change {param1, param2} / exit?\t')
+        command = input('Command: buy {numberOfTicket} / show / change {param1, param2} / exit?\t')
 
         if command.startswith('buy'):
             RequestTicket(server_selected, int(command.lstrip('buy ')),
