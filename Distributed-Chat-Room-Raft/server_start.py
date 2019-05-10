@@ -1,4 +1,4 @@
-from server.server import Server
+from server import Server
 
 
 server = Server()

@@ -1,4 +1,4 @@
-from client.client import Client
+from client import Client
 
 
 client = Client()
