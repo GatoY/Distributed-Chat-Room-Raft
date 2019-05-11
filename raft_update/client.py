@@ -1,5 +1,5 @@
 #	client 
-#	Implemented by Zhijing@Mar. 7
+
 import json
 import socket
 import datetime
