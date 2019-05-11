@@ -77,10 +77,7 @@ class datacenter(object):
 
         # become candidate after timeout
         if self.datacenter_id in self.getAllCenterID():
-            # 定时运行那个函数
             self.election_timer = Timer(self.election_timeout, self.startElection)
-            # 当一个线程设置为daemon线程时，主线程结束时，不会因为daemon线程还没有结束运行而阻塞。
-            # 当一个线程设置为非daemon线程时，主线程结束时，会检查所有非daemon的子线程是否结束。如果还未结束，则主线程等待非daemon结束后再退出。
             self.election_timer.daemon = True
             self.election_timer.start()
         else:
@@ -92,7 +89,7 @@ class datacenter(object):
         self.heartbeat_timer = None
 
     def resetHeartbeatTimeout(self):
-        """
+        """z
         reset heartbeat timeout
         """
         if self.heartbeat_timer:
