@@ -1,7 +1,7 @@
 import logging
 import random
 import pickle
-from raft.datacenter import LogEntry
+from datacenter import LogEntry
 import json
 
 CONFIG = json.load(open('config.json'))
