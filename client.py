@@ -1,10 +1,14 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import tkinter
+import json
+import sys
 
 
 class Client():
-    def __init__(self):
+    def __init__(self, server_id):
+        CONFIG = json.load(open("config.json"))
+        PORT = CONFIG['server_port'][server_id]['port']
 
         self.top = tkinter.Tk()
         self.top.title("Chat")
@@ -31,16 +35,8 @@ class Client():
         self.top.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # ----Now comes the sockets part----
-        HOST = input('Enter host: ')
-        PORT = input('Enter port: ')
-
-        if not PORT:
-            PORT = 33000
-        else:
-            PORT = int(PORT)
-
+        HOST = ''
         self.BUFSIZ = 1024
-
         ADDR = (HOST, PORT)
 
         self.client_socket = socket(AF_INET, SOCK_STREAM)
@@ -73,5 +69,5 @@ class Client():
         self.my_msg.set("{quit}")
         self.send()
 
-client = Client()
+client = Client(sys.argv[1])
 
