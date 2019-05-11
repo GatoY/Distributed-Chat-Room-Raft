@@ -4,7 +4,7 @@ import os
 import sys
 import logging
 from socket import *
-import datacenter
+from raft import datacenter
 from threading import Timer
 import pickle
 
@@ -46,13 +46,18 @@ class server(object):
             logging.warning('trying to sent to server not in config')
             return
         peer_socket = socket(AF_INET, SOCK_DGRAM)
-        host = ''
+        host = '127.0.0.1'
         port = target_meta["port"]
         addr = (host, port)
         logging.debug("{0} <-- {1}".format(target_meta['port'], message))
-        sent = peer_socket.sendto(message, addr)
+        sent = peer_socket.sendto(message.encode(), addr)
         # peer_socket.connect(addr)
         #self.all_socket[port].send(message)
+
+    def sendToClient(self,message, address):
+        peer_socket = socket(AF_INET, SOCK_DGRAM)
+        sent = peer_socket.sendto(message.encode(), address)
+
 
     def requestVote(self, current_term, latest_log_term, latest_log_index):
         # broadcast the requestVote message to all other datacenters
@@ -113,21 +118,23 @@ class server(object):
         # Message types:
         # messages from servers
         # 1. requestVote RPC
+        message_type = message_type.decode()
         if message_type == 'REQ_VOTE':
             logging.info("--> {0}. {1}".format(message_type, content))
-            self.dc.handleRequestVote(*json.loads('[%s]' % content))
+            self.dc.handleRequestVote(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
         # 2. requestVoteReply RPC
         elif message_type == 'REQ_VOTE_REPLY':
+
             logging.info("--> {0}. {1}".format(message_type, content))
             follower_id, follower_term, vote_granted \
-                = json.loads('[%s]' % content)
-            self.dc.handleRequestVoteReply(*json.loads('[%s]' % content))
+                = json.loads(json.dumps(eval(('[%s]' % content.decode()))))
+            self.dc.handleRequestVoteReply(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
         # 3. appendEntry RPC
         elif message_type == 'APPEND':
             logging.debug("--> {0}. {1}".format(message_type, content))
             leader_id, leader_term, leader_prev_log_idx,\
-                leader_prev_log_term, entries, leader_commit_idx =\
-                json.loads('[%s]' % content)
+                leader_prev_log_term, entries, leader_commit_idx = \
+                json.loads(json.dumps(eval(('[%s]' % content.decode()))))
             self.dc.handleAppendEntry(
                 leader_id, leader_term,
                 leader_prev_log_idx,
@@ -137,7 +144,7 @@ class server(object):
         # 4. appendEntryReply RPC
         elif message_type == 'APPEND_REPLY':
             logging.debug("--> {0}. {1}".format(message_type, content))
-            self.dc.handleAppendEntryReply(*json.loads('[%s]' % content))
+            self.dc.handleAppendEntryReply(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
         # messages from clients
         # 1. buy
         elif message_type == 'BUY':
@@ -152,15 +159,17 @@ class server(object):
             #         # self.all_socket[port].connect(addr)
             #         self.sendMessage(self.dc.datacenters[center_id], content)
             logging.info("--> {0}. {1}".format(message_type, content))
-            self.dc.handleBuy(*tuple(json.loads('[%s]' % content))+address)
+            self.dc.handleBuy(*tuple(json.loads(json.dumps(eval(('[%s]' % content.decode())))))+address)
         # 1.1. forwarded buy
         elif message_type == 'BUY-FORWARD':
             logging.info("--> {0}. {1}".format(message_type, content))
-            self.dc.handleBuy(*json.loads('[%s]' % content))
+            self.dc.handleBuy(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
         # 2. show
         elif message_type == 'SHOW':
             logging.info("--> {0}. {1}".format(message_type, content))
-            self.dc.handleShow()
+            message = str(self.dc.handleShow())
+            self.sendToClient(message, address)
+
         # 3. change
         elif message_type == 'CHANGE':
             logging.info("--> {0}. {1}".format(message_type, content))
@@ -183,11 +192,12 @@ class server(object):
                 # msg = conn.recv(1024)
                 msg, address = self.listener.recvfrom(4096)
                 # logging.info("Connection from %s" % str(address))
-                for line in msg.split('\n'):
+                #print(msg.split(str.encode('\n')))
+                for line in msg.split(str.encode('\n')):
                     if len(line) == 0: continue
                     try:
                         self.handleIncommingMessage(
-                            *tuple(line.strip().split(':', 1))+(address, ))
+                            *tuple(line.strip().split(str.encode(':'), 1))+(address, ))
                     except Exception as e:
                         logging.error('Error with incomming message. {0} {1}'
                                       .format(e, line))
@@ -200,10 +210,14 @@ class server(object):
 def main():
     logging.info("Start datacenter...")
     datacenter_cfg = CONFIG['datacenters']
-    # port = datacenter_cfg[sys.argv[1]]['port']
-    Server = server(sys.argv[1], int(sys.argv[2]))
+    port = datacenter_cfg[sys.argv[1]]['port']
+    Server = server(sys.argv[1], port)
 
 if __name__ == "__main__":
+    global false, true
+    false = False
+    true = True
+    logging.getLogger().setLevel(logging.INFO)
     logging.basicConfig(format='(DC-%s)' % sys.argv[1] +
                                ' %(asctime)s [%(levelname)s]:%(message)s',
                         datefmt='%I:%M:%S',

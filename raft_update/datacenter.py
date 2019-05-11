@@ -8,6 +8,7 @@ import logging
 import random
 import pickle
 
+
 CONFIG = json.load(open('config.json'))
 
 
@@ -35,6 +36,7 @@ class datacenter(object):
     This class handles the protocol logic of datacenters
     """
     def __init__(self, datacenter_id, server):
+        logging.getLogger().setLevel(logging.DEBUG)
         """
         we use datacenter_id instead of pid because it is potentially
         deployed on multiple servers, and many have the same pid
@@ -44,6 +46,7 @@ class datacenter(object):
         # self.datacenters = CONFIG['datacenters']
         # update the datacenters, so that the id and port are all int
         # self.datacenters = dict([(x, y) for x, y in self.datacenters.items()])
+        # 总票数？
         self.total_ticket = CONFIG['total_ticket']
 
         # get current_term, voted_for, log from the state.p
@@ -74,7 +77,10 @@ class datacenter(object):
 
         # become candidate after timeout
         if self.datacenter_id in self.getAllCenterID():
+            # 定时运行那个函数
             self.election_timer = Timer(self.election_timeout, self.startElection)
+            # 当一个线程设置为daemon线程时，主线程结束时，不会因为daemon线程还没有结束运行而阻塞。
+            # 当一个线程设置为非daemon线程时，主线程结束时，会检查所有非daemon的子线程是否结束。如果还未结束，则主线程等待非daemon结束后再退出。
             self.election_timer.daemon = True
             self.election_timer.start()
         else:
@@ -203,17 +209,21 @@ class datacenter(object):
         if self.isLeader():
             # if the request is already in the list, ignore it
             if not self.requestInLog(client_id, request_id):
-                self.log.append(LogEntry(self.current_term, len(self.log),
-                                         {'client_id': client_id,
-                                          'request_id': request_id,
-                                          'ticket_count': ticket_count,
-                                          'client_ip': client_ip,
-                                          'client_port': client_port}))
-                dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
-                filename = "./state"+self.datacenter_id+'.pkl'
-                fileobj = open(filename, 'wb')
-                pickle.dump(dictobj, fileobj)
-                fileobj.close()
+                if self.total_ticket>=ticket_count:
+                    self.log.append(LogEntry(self.current_term, len(self.log),
+                                             {'client_id': client_id,
+                                              'request_id': request_id,
+                                              'ticket_count': ticket_count,
+                                              'client_ip': client_ip,
+                                              'client_port': client_port}))
+                    dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
+                    filename = "./state"+self.datacenter_id+'.pkl'
+                    fileobj = open(filename, 'wb')
+                    pickle.dump(dictobj, fileobj)
+                    fileobj.close()
+                    self.server.sendToClient('You successfully bought tickets.', (client_ip, client_port))
+                else:
+                    self.server.sendToClient('Purchase failed, there are not enough tickets.', (client_ip, client_port))
         else:
             # if there is a current leader, then send the request to
             # the leader, otherwise, ignore the request, the client
@@ -312,9 +322,9 @@ class datacenter(object):
         indices[self.datacenter_id] = len(self.log) - 1
         # print('!!!!!', indices)
         if entry['config'] == 'single':
-            return sorted([indices[x] for x in entry['data']])[(len(entry['data'])-1)/2]
-        maxOld = sorted([indices[x] for x in entry['data'][0]])[(len(entry['data'][0])-1)/2]
-        maxNew = sorted([indices[x] for x in entry['data'][1]])[(len(entry['data'][1])-1)/2]
+            return sorted([indices[x] for x in entry['data']])[int((len(entry['data'])-1)/2)]
+        maxOld = sorted([indices[x] for x in entry['data'][0]])[int((len(entry['data'][0])-1)/2)]
+        maxNew = sorted([indices[x] for x in entry['data'][1]])[int((len(entry['data'][1])-1)/2)]
         return min(maxOld, maxNew)
 
     def handleRequestVote(self, candidate_id, candidate_term,
@@ -407,6 +417,7 @@ class datacenter(object):
         :type follower_term: int
         :type vote_granted: bool
         """
+        print("123",vote_granted)
         if vote_granted:
             self.votes.append(follower_id)
             logging.info('get another vote in term {}, votes got: {}'
@@ -441,10 +452,13 @@ class datacenter(object):
         first line: current state
         following lines: committed log
         """
+        logging.getLogger().setLevel(logging.INFO)
         logging.info(self.total_ticket)
         for entry in self.log:
             logging.info(entry)
         logging.info(self.role)
+        return str(self.total_ticket)+" tickes left"
+
 
     def sendHeartbeat(self, ignore_last=False):
         """
@@ -472,6 +486,7 @@ class datacenter(object):
         :type success: bool
         :type follower_last_index: int
         """
+        logging.getLogger().setLevel(logging.DEBUG)
         if follower_term > self.current_term:
             self.current_term = follower_term
             dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
@@ -510,13 +525,15 @@ class datacenter(object):
             logging.info('log committed upto {}'.format(majority_idx))
         old_commit_idx = self.commit_idx
         self.commit_idx = max(self.commit_idx, majority_idx)
-        map(self.commitEntry, self.log[old_commit_idx+1:majority_idx+1])
+        list(map(self.commitEntry, self.log[old_commit_idx+1:majority_idx+1]))
 
     def commitEntry(self, entry):
         """
         commit a log entry
         :type entry: LogEntry
         """
+        print("test2222")
+        logging.getLogger().setLevel(logging.INFO)
         logging.info('entry committing! {}'.format(entry))
         # check if the entry is a buy ticket entry
         # if so, and if I am the leader, send a message to client about
@@ -524,10 +541,11 @@ class datacenter(object):
         if entry.command and 'ticket_count' in entry.command:
             ticket = entry.command['ticket_count']
             if self.isLeader():
-                self.server.sendMessage(
-                    {'port': entry.command['client_port']},
+                client_ip = entry.command['client_ip']
+                client_port = entry.command['client_port']
+                self.server.sendToClient(
                     ('Here is your tickets, remaining tickets %d' % (self.total_ticket - ticket))
-                    if self.total_ticket >= ticket else 'Sorry, not enough tickets left')
+                    if self.total_ticket >= ticket else 'Sorry, not enough tickets left', (client_ip,client_port ))
             if self.total_ticket >= ticket:
                 self.total_ticket -= ticket
                 logging.info('{0} ticket sold to {1}'.format(
@@ -570,6 +588,7 @@ class datacenter(object):
                A heartbeat is a meesage with [] is entries
         :type leader_commit_idx: int
         """
+        logging.getLogger().setLevel(logging.DEBUG)
         _, my_prev_log_idx = self.getLatest()
         if self.current_term > leader_term:
             success = False
@@ -591,13 +610,15 @@ class datacenter(object):
                 # Append any new entries not already in the log
                 for entry in entries:
                     logging.debug('adding {} to log'.format(entry))
+                    print('leader_commit_idx',leader_commit_idx,'self.commit_idx',self.commit_idx)
                     self.log.append(entry)
                 # check the leader's committed idx
                 if leader_commit_idx > self.commit_idx:
+                    print("test11111")
                     old_commit_idx = self.commit_idx
                     self.commit_idx = leader_commit_idx
-                    map(self.commitEntry,
-                        self.log[old_commit_idx+1:leader_commit_idx+1])
+                    list(map(self.commitEntry,
+                        self.log[old_commit_idx+1:leader_commit_idx+1]))
                     logging.debug('comitting upto {}'.format(leader_commit_idx))
                 success = True
             dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}

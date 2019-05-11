@@ -6,22 +6,24 @@ import datetime
 import sys
 import time
 import threading
+from socket import *
 
 CONFIG = json.load(open('config.json'))
 
 client_id = sys.argv[1]
+client_port = sys.argv[2]
 
 
 def Receive(c):
     while True:
         data, address = c.recvfrom(4096)
-        print(data)
+        print(data.decode())
 
 
 def Request(port, message, c):
-    host = ''
+    host = '127.0.0.1'
     addr = (host, port)
-    sent = c.sendto(message, addr)
+    sent = c.sendto(message.encode(), addr)
     # !!! TODO: change recvfrom to a global wait and print
     # time.sleep(2)
     # data, server = c.recvfrom(4096)
@@ -50,14 +52,14 @@ def Interface_cmd(c):
     for i in range(1, len(datacenter)+1):
         datacenter_list.append(datacenter[str(i)]['port'])
         print('datacenter: '+ str(datacenter[str(i)]['port']))
-    cmd = raw_input('Please choose a server to connect... or exit...\t')
+    cmd = input('Please choose a server to connect... or exit...\t')
     if cmd.startswith('exit'):
         choice = False
     else:
         server_selected = int(cmd)
     while choice:
         
-        command = raw_input('Command: buy {numberOfTicket} / show / change {param1, param2} / exit?\t')
+        command = input('Command: buy {numberOfTicket} / show / change {param1, param2} / exit?\t')
 
         if command.startswith('buy'):
             RequestTicket(server_selected, int(command.lstrip('buy ')),
@@ -79,8 +81,9 @@ def main():
     print("Welcome to SANDLAB Ticket Office!")
     print("The current time is " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
     print("\n*********************************\n")
-
-    c = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    ip = gethostbyname('')
+    c = socket(AF_INET, SOCK_DGRAM)
+    c.bind((ip, int(client_port)))
     t = threading.Thread(target=Receive, args = (c, ))
     t.daemon = True
     t.start()

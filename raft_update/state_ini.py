@@ -1,7 +1,7 @@
 import logging
 import random
 import pickle
-from datacenter import LogEntry
+from raft.datacenter import LogEntry
 import json
 
 CONFIG = json.load(open('config.json'))
@@ -9,8 +9,9 @@ CONFIG = json.load(open('config.json'))
 
 
 
-
+# 前两个参数是self.term，self.index
 log = [LogEntry(0, 0, {'config':'single', 'data':CONFIG['datacenters']})]
+#当前term
 current_term = 0
 voted_for = None
 dictobj = {'current_term': current_term, 'voted_for': voted_for, 'log': log}
