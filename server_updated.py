@@ -1,71 +1,47 @@
 """Server for multithreaded (asynchronous) chat application."""
-from socket import *
+from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import sys
-import json
-import random
-from threading import Timer
-
-
-#
-#
-#   msg: {'REQ_VOTE'}
-#        {'REQ_VOTE_REPLY'}
-#        {'LOG'}
-#        {'HEART_BEAT'}
-#
 
 
 class Server:
-    def __init__(self, server_id):
-        CONFIG = json.load(open("config.json"))
-        self.server_port = CONFIG['server_port']
-
+    def __init__(self, server_id, port=33000):
         self.clients = {}
-        self.clients_con = []
         self.addresses = {}
         self.HOST = ''
+        self.PORT = port
         self.BUFSIZ = 1024
 
-        self.server = socket(AF_INET, SOCK_STREAM)
 
-        self.server.bind((self.HOST, self.server_port[server_id]['port']))
-        self.server.listen(5)
-        self.log = {}
-
-        self.listener = socket(AF_INET, SOCK_DGRAM)
-        self.listener.bind((self.HOST, self.server_port[server_id]['server_port']))
+        ###
 
         self.server_id = server_id
         self.current_term = 0
-        self.timeout = 3
-        self.heart_beat = 0.1
+        self.timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2*self.timeout)
 
         # become candidate after timeout
-        # if self.role != 'leader':
-        #     self.election_timer = Timer(self.election_timeout, self.start_election)
-        #     self.election_timer.daemon = True
-        #     self.election_timer.start()
-        # else:
-        #     self.election_timer = None
-        # self.sendMessage('2', 'yes')
-        print('====')
-        Thread(target=self.start())
-        t = {'1': 2}
-        self.sendMessage("1", t)
-        Thread(target=self.rec_msg())
+        if self.role != 'leader':
+            self.election_timer = Timer(self.election_timeout, self.start_election)
+            self.election_timer.daemon = True
+            self.election_timer.start()
+        else:
+            self.election_timer = None
+
 
         print('server running at ip: %s, port: %s'%(self.HOST, self.PORT))
 
-
     def start(self):
+        self.server = socket(AF_INET, SOCK_STREAM)
+        self.server.bind(self.HOST, self.PORT)
+
+        self.server.listen(5)
         print("Waiting for connection...")
         self.new_thread= Thread(target=self.accept_incoming_connections)
         self.new_thread.start()
-        # self.new_thread.join()
-        # self.server.close()
+        self.new_thread.join()
+        self.server.close()
 
     # new_add
     def start_election(self):
@@ -79,7 +55,6 @@ class Server:
         self.current_term += 1
         self.votes = [self.server_id]
         self.voted_for = self.server_id
-        self.server.requestVote()
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
         print('become candidate for term {}'.format(self.current_term))
@@ -90,19 +65,31 @@ class Server:
 
         # send RequestVote to all other servers
         # (index & term of last log entry)
+        self.server.requestVote()
 
     def get_server_id_list(self):
         return list()
         pass
 
     def rec_msg(self):
-        print('rec msg')
         while True:
-            msg, address = self.listener.recvfrom(4096)
-            msg = json.loads(msg)
-            print(msg)
-
-
+            try:
+                msg, address = self.listener.recvfrom(4096)
+                # logging.info("Connection from %s" % str(address))
+                #print(msg.split(str.encode('\n')))
+                for line in msg.split(str.encode('\n')):
+                    if len(line) == 0: continue
+                    try:
+                        self.handleIncommingMessage(
+                            *tuple(line.strip().split(str.encode(':'), 1))+(address, ))
+                    except Exception as e:
+                        logging.error('Error with incomming message. {0} {1}'
+                                      .format(e, line))
+                        raise
+            except Exception as e:
+                logging.error('Error with incomming connection. {0} {1}'
+                              .format(e, msg))
+                raise
     # new_add
     def handleIncommingMessage(self, message_type, content, address):
         # handle incomming messages
@@ -130,7 +117,7 @@ class Server:
                 server_id=self.server_id,
                 current_term=self.current_term,
             )
-            for server_id in self.server_port:
+            for server_id in self.get_server_id_list():
                 if server_id != self.server_id:
                     self.sendMessage(server_id, message)
 
@@ -194,12 +181,11 @@ class Server:
         :type target_meta: e.g. { "port": 12348 }
         :type message: str
         """
-        message = json.dumps(message)
         peer_socket = socket(AF_INET, SOCK_DGRAM)
-        print(self.server_port[server_id])
-        port = self.server_port[server_id]['server_port']
-        addr = (self.HOST, port)
-        peer_socket.sendto(message.encode(), addr)
+        host = '127.0.0.1'
+        port = server_port[server_id]
+        addr = (host, port)
+        sent = peer_socket.sendto(message.encode(), addr)
 
         # peer_socket.connect(addr)
         #self.all_socket[port].send(message)
@@ -213,7 +199,7 @@ class Server:
         if self.election_timer:
             self.election_timer.cancel()
         # need to restart election if the election failed
-        self.election_timer = Timer(self.election_timeout, self.start_election())
+        self.election_timer = Timer(self.election_timeout, self.startElection)
         self.election_timer.daemon = True
         self.election_timer.start()
 
@@ -222,8 +208,7 @@ class Server:
     def accept_incoming_connections(self):
         """Sets up handling for incoming clients."""
         while True:
-            client, client_address = self.server.accept()
-            self.clients_con.append(client)
+            client, client_address = self.SERVER.accept()
             print("%s:%s has connected." % client_address)
             client.send(bytes("Welcome! Type your username and press enter to continue.", "utf8"))
             self.addresses[client] = client_address
@@ -243,13 +228,11 @@ class Server:
         while True:
             msg = client.recv(self.BUFSIZ)
             if msg != bytes("{quit}", "utf8"):
-                pass
                 self.broadcast(msg, name + ": ")
             else:
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
                 del self.clients[client]
-                del self.clients_con[client]
                 self.broadcast(bytes("%s has left the chat." % name, "utf8"))
                 break
 
@@ -263,6 +246,5 @@ class Server:
 
 
 if __name__ == "__main__":
-
-    server = Server(str(sys.argv[1]))
+    server = Server(sys.args[0])
     server.start()
