@@ -44,7 +44,7 @@ class Server:
                 }).encode())
 
     def start(self):
-        self.__socket.bind(('127.0.0.1', 8888))
+        self.__socket.bind(('127.0.0.1', 8890))
         self.__socket.listen(10)
         print('[Server] server is starting')
 

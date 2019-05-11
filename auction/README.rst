@@ -1,1 +1,0 @@
-Auction System using UDP and TCP sockets
