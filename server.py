@@ -45,12 +45,13 @@ class Server:
 
         # become candidate after timeout
 
-        # if self.role != 'leader':
-        #     self.election_timer = Timer(self.election_timeout, self.start_election)
-        #     self.election_timer.daemon = True
-        #     self.election_timer.start()
-        # else:
-        #     self.election_timer = None
+        if self.role != 'leader':
+            self.election_timer = Timer(self.election_timeout, self.start_election)
+            self.election_timer.daemon = True
+            self.election_timer.start()
+        else:
+            self.election_timer = None
+
         Thread(target=self.start())
         # self.sendMessage('2', {'1':1})
         Thread(target=self.rec_msg())
@@ -93,25 +94,23 @@ class Server:
         while True:
             msg, address = self.listener.recvfrom(4096)
             msg = json.loads(msg)
+            self.handleIncommingMessage(msg)
             print(msg)
 
     # new_add
-    def handleIncommingMessage(self, message_type, content, address):
+    def handleIncommingMessage(self, msg):
         # handle incomming messages
         # Message types:
         # messages from servers
         # 1. requestVote RPC
-        message_type = message_type.decode()
-        if message_type == 'REQ_VOTE':
-            # logging.info("--> {0}. {1}".format(message_type, content))
-            self.handleRequestVote(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
+        msg_type = msg['Command']
+        if msg_type == 'REQ_VOTE':
+            self.handleRequestVote(msg)
         # 2. requestVoteReply RPC
-        elif message_type == 'REQ_VOTE_REPLY':
-
-            logging.info("--> {0}. {1}".format(message_type, content))
+        elif msg_type == 'REQ_VOTE_REPLY':
             follower_id, follower_term, vote_granted \
                 = json.loads(json.dumps(eval(('[%s]' % content.decode()))))
-            self.dc.handleRequestVoteReply(*json.loads(json.dumps(eval(('[%s]' % content.decode())))))
+            self.handleRequestVoteReply()
 
     # new_add
     def requestVote(self):
@@ -125,8 +124,7 @@ class Server:
         # Timer(CONFIG['messageDelay'], sendMsg).start()
 
     # new_add
-    def handleRequestVote(self, candidate_id, candidate_term,
-                          candidate_log_term, candidate_log_index):
+    def handleRequestVote(self, msg):
         """
         Handle incoming requestVote message
         :type candidate_id: str
@@ -134,16 +132,14 @@ class Server:
         :type candidate_log_term: int
         :type candidate_log_index: int
         """
-        if candidate_id not in self.getAllCenterID():
-            logging.warning('{} requested vote, but he is not in current config'
-                            .format(candidate_id))
-            return
+        candidate_term = msg['current_term']
+        candidate_id = msg['ServerId']
+
         if candidate_term < self.current_term:
-            self.server.requestVoteReply(
-                candidate_id, self.current_term, False)
+            self.requestVoteReply(candidate_id, False)
             return
-        if candidate_term > self.current_term:
-            self.current_term = candidate_term
+
+
         self.current_term = max(candidate_term, self.current_term)
         grant_vote = (not self.voted_for or self.voted_for == candidate_id) and \
                      candidate_log_index >= self.getLatest()[1]
@@ -161,17 +157,13 @@ class Server:
             candidate_id, self.current_term, grant_vote)
 
     # new_add
-    def requestVoteReply(self, target_id, current_term, grant_vote):
+    def requestVoteReply(self, target_id, grant_vote):
         # send reply to requestVote message
-        def sendMsg():
-            message = ('REQ_VOTE_REPLY:"{datacenter_id}",' +
-                       '{current_term},{grant_vote}\n').format(
-                datacenter_id=self.center_id,
-                current_term=current_term,
-                grant_vote=json.dumps(grant_vote))
-            self.sendMessage(self.dc.getMetaByID(target_id), message)
+            message = {'Command': 'REQ_VOTE_REPLY', 'server_id': self.server_id, 'current_term': self.current_term,
+                       'Decision': grant_vote}
+            self.sendMessage(target_id, message)
 
-        Timer(CONFIG['messageDelay'], sendMsg).start()
+        # Timer(CONFIG['messageDelay'], sendMsg).start()
 
     # new_add
     def sendMessage(self, server_id, message):
