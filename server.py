@@ -7,6 +7,7 @@ import random
 from threading import Timer
 import numpy as np
 
+
 #
 #
 #   msg: {'REQ_VOTE'}
@@ -25,7 +26,7 @@ import numpy as np
 #
 
 class Server:
-    def __init__(self, server_id, num_nodes = 3):
+    def __init__(self, server_id, num_nodes=3):
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
 
@@ -40,7 +41,7 @@ class Server:
 
         self.server.bind((self.HOST, self.server_port[server_id]['port']))
         self.server.listen(5)
-        self.log = {}
+        self.log = []
 
         self.listener = socket(AF_INET, SOCK_DGRAM)
         self.listener.bind((self.HOST, self.server_port[server_id]['server_port']))
@@ -53,6 +54,7 @@ class Server:
         self.heart_beat = 0.1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
+        self.nextIndices = {}
 
         # become candidate after timeout
 
@@ -126,6 +128,22 @@ class Server:
         # 2. requestVoteReply RPC
         elif msg_type == 'REQ_VOTE_REPLY':
             self.handleRequestVoteReply(msg)
+        elif msg_type == 'ClientRequest':
+            self.handelClientRequest(msg)
+
+    def handelClientRequest(self, msg):
+        term = msg['current_term']
+        if term<self.current_term:
+            pass
+            # self.clientRequestReply(msg, False)
+        serverId = msg['server_id']
+        self.nextIndices[serverId] = msg['CommitIndex']
+        self.log.append(msg['Entries'])
+
+    def clientRequestReply(self, msg, answer):
+        # answer_msg = {'Command':}
+        # self.sendMessage(msg['server_id'], )
+        pass
 
     # new_add
     def requestVote(self):
@@ -223,7 +241,6 @@ class Server:
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
 
-
     def sendHeartbeat(self, ignore_last=False):
         """
         Send heartbeat message to all pears in the latest configuration
@@ -241,12 +258,12 @@ class Server:
 
         self.resetHeartbeatTimeout()
 
-    def sendAppendEntry(self, center_id):
+    def sendAppendEntry(self, server_id):
         """
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        prevEntry = self.log[self.nextIndices[center_id]-1]
+        prevEntry = self.log[self.nextIndices[server_id] - 1]
         self.server.appendEntry(center_id, self.current_term,
                                 prevEntry.index, prevEntry.term,
                                 self.log[self.nextIndices[center_id]:],
@@ -258,7 +275,7 @@ class Server:
         is enough to get a majority based on the current config
         :rtype: bool
         """
-        return np.unique(np.array(self.votes)).shape[0] > self.num_nodes/2
+        return np.unique(np.array(self.votes)).shape[0] > self.num_nodes / 2
 
     def isLeader(self):
         """
@@ -292,9 +309,6 @@ class Server:
         # peer_socket.connect(addr)
         # self.all_socket[port].send(message)
 
-
-
-
     # new_add
     def resetElectionTimeout(self):
         """
@@ -319,6 +333,20 @@ class Server:
             self.addresses[client] = client_address
             Thread(target=self.handle_client, args=(client,)).start()
 
+
+    def rec_client(self, client, msg):
+        # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
+        entry = {'Command': 'ClientRequest', 'current_term': self.current_term, 'LeaderId': self.leader_id,
+                 'Entries': msg, 'CommitIndex': self.CommitIndex, 'LastApplied':self.LastApplied, 'server_id': self.server_id}
+        self.log.append(entry)
+        self.CommitIndex += 1
+        if self.server_id != self.leader_id:
+            self.sendMessage(self.leader_id, entry)
+        else:
+            self.AppendEntries(msg)
+
+
+
     def handle_client(self, client):  # Takes client socket as argument.
         """Handles a single client connection."""
 
@@ -326,6 +354,11 @@ class Server:
         welcome = 'Welcome %s! If you want to quit, type {quit} to exit.' % name
         client.send(bytes(welcome, "utf8"))
         msg = "%s has joined the chat!" % name
+
+        self.rec_client(client, msg)
+
+        # TODO
+
         self.broadcast(msg, name)
         self.broadcast_client(msg)
         self.clients[client] = name
