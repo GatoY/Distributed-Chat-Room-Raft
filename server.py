@@ -182,6 +182,63 @@ class Server:
                 fileobj.close()
                 self.stepDown()
 
+    def becomeLeader(self):
+        """
+        do things to be done as a leader
+        """
+        print('become leader for term {}'.format(self.current_term))
+
+        # no need to wait for heartbeat anymore
+        self.election_timer.cancel()
+
+        self.role = 'leader'
+        self.leader_id = self.server_id
+        # keep track of the entries known to be logged in each data center
+        # note that when we are in the transition phase
+        # we as the leader need to keep track of nodes in
+        # the old and the new config
+        # self.loggedIndices = dict([(center_id, 0)
+        #                            for center_id in self.getAllCenterID()
+        #                            if center_id != self.datacenter_id])
+        # initialize a record of nextIdx
+        # self.nextIndices = dict([(center_id, self.getLatest()[1]+1)
+        #                          for center_id in self.getAllCenterID()
+        #                          if center_id != self.datacenter_id])
+
+        self.sendHeartbeat()
+        self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
+        self.heartbeat_timer.daemon = True
+        self.heartbeat_timer.start()
+
+
+    def sendHeartbeat(self, ignore_last=False):
+        """
+        Send heartbeat message to all pears in the latest configuration
+        if the latest is a new configuration that is not committed
+        go to the join configuration instead
+        :type ignore_last: bool
+              - this is used for the broadcast immediately after a new
+              config is committed. We need to send not only to sites
+              in the newly committed config, but also to the old ones
+        """
+
+        for server_id in self.server_port:
+            if server_id != self.server_id:
+                self.sendAppendEntry(server_id)
+
+        self.resetHeartbeatTimeout()
+
+    def sendAppendEntry(self, center_id):
+        """
+        send an append entry message to the specified datacenter
+        :type center_id: str
+        """
+        prevEntry = self.log[self.nextIndices[center_id]-1]
+        self.server.appendEntry(center_id, self.current_term,
+                                prevEntry.index, prevEntry.term,
+                                self.log[self.nextIndices[center_id]:],
+                                self.commit_idx)
+
     def enoughForLeader(self):
         """
         Given a list of servers who voted, find out whether it
