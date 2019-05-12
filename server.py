@@ -130,10 +130,21 @@ class Server:
             self.handleRequestVoteReply(msg)
         elif msg_type == 'ClientRequest':
             self.handelClientRequest(msg)
+        elif msg_type == 'log':
+            self.updateLog(msg['log'])
+
+    def updateLog(self, log):
+        lenth = len(log)
+        self_len = len(self.log)
+        for i in range(self_len, lenth):
+            self.broadcast_client(log[i])
+
+        self.LastApplied = len(log) - 1
+        self.log = log
 
     def handelClientRequest(self, msg):
         term = msg['current_term']
-        if term<self.current_term:
+        if term < self.current_term:
             pass
             # self.clientRequestReply(msg, False)
         serverId = msg['server_id']
@@ -241,7 +252,7 @@ class Server:
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
 
-    def sendHeartbeat(self, ignore_last=False):
+    def sendHeartbeat(self):
         """
         Send heartbeat message to all pears in the latest configuration
         if the latest is a new configuration that is not committed
@@ -263,11 +274,12 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        prevEntry = self.log[self.nextIndices[server_id] - 1]
-        self.server.appendEntry(center_id, self.current_term,
-                                prevEntry.index, prevEntry.term,
-                                self.log[self.nextIndices[center_id]:],
-                                self.commit_idx)
+        msg = {'Command': 'log', 'log': self.log}
+        self.sendMessage(server_id, msg)
+        # self.server.appendEntry(center_id, self.current_term,
+        #                         prevEntry.index, prevEntry.term,
+        #                         self.log[self.nextIndices[center_id]:],
+        #                         self.commit_idx)
 
     def enoughForLeader(self):
         """
@@ -333,19 +345,18 @@ class Server:
             self.addresses[client] = client_address
             Thread(target=self.handle_client, args=(client,)).start()
 
-
-    def rec_client(self, client, msg):
+    def rec_client(self, msg):
+        print('receive client request')
         # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
         entry = {'Command': 'ClientRequest', 'current_term': self.current_term, 'LeaderId': self.leader_id,
-                 'Entries': msg, 'CommitIndex': self.CommitIndex, 'LastApplied':self.LastApplied, 'server_id': self.server_id}
+                 'Entries': msg, 'CommitIndex': self.CommitIndex, 'LastApplied': self.LastApplied,
+                 'server_id': self.server_id}
         self.log.append(entry)
         self.CommitIndex += 1
         if self.server_id != self.leader_id:
             self.sendMessage(self.leader_id, entry)
         else:
-            self.AppendEntries(msg)
-
-
+            self.log.append(msg)
 
     def handle_client(self, client):  # Takes client socket as argument.
         """Handles a single client connection."""
@@ -355,26 +366,29 @@ class Server:
         client.send(bytes(welcome, "utf8"))
         msg = "%s has joined the chat!" % name
 
-        self.rec_client(client, msg)
+        self.rec_client(msg)
 
-        # TODO
-
-        self.broadcast(msg, name)
-        self.broadcast_client(msg)
+        # self.broadcast(msg, name)
+        # self.broadcast_client(msg)
         self.clients[client] = name
 
         while True:
             msg = client.recv(self.BUFSIZ)
             if msg != bytes("{quit}", "utf8"):
                 msg = msg.decode('utf8')
-                self.broadcast_client(msg)
-                self.broadcast(msg, name + ": ")
+                # self.broadcast_client(msg)
+                # self.broadcast(msg, name + ": ")
+                self.rec_client(msg)
+
             else:
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
                 del self.clients[client]
                 del self.clients_con[client]
-                self.broadcast("%s has left the chat." % name)
+                # self.broadcast("%s has left the chat." % name)
+                msg = "%s has left the chat." % name
+                client.send(bytes("", "utf8") + msg)
+                self.rec_client(msg)
                 break
 
     def broadcast(self, msg, name):  # prefix is for name identification.
