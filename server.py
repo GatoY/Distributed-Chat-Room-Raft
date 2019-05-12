@@ -51,7 +51,7 @@ class Server:
         self.server_id = server_id
         self.current_term = 0
         self.timeout = 3
-        self.heart_beat = 0.1
+        self.heartbeat_timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
         self.nextIndices = {}
@@ -60,6 +60,7 @@ class Server:
 
         self.election_log = {}
         self.vote_log = {}
+        self.heartbeat_timer = None
 
         # if self.role != 'leader':
         print(self.election_timeout)
@@ -223,6 +224,21 @@ class Server:
                 fileobj.close()
                 self.stepDown()
 
+    def stepDown(self, new_leader=None):
+        logging.debug('update itself to term {}'.format(self.current_term))
+        # if candidate or leader, step down and acknowledge the new leader
+        if self.isLeader():
+            # if the datacenter was leader
+            self.heartbeat_timer.cancel()
+        if new_leader != self.leader_id:
+            logging.info('leader become {}'.format(new_leader))
+        self.leader_id = new_leader
+        # need to restart election if the election failed
+        self.resetElectionTimeout()
+        # convert to follower, not sure what's needed yet
+        self.role = 'follower'
+        self.voted_for = None
+
     def becomeLeader(self):
         """
         do things to be done as a leader
@@ -263,11 +279,23 @@ class Server:
               in the newly committed config, but also to the old ones
         """
 
+        print('bong')
         for server_id in self.server_port:
             if server_id != self.server_id:
                 self.sendAppendEntry(server_id)
 
         self.resetHeartbeatTimeout()
+
+    def resetHeartbeatTimeout(self):
+        """z
+        reset heartbeat timeout
+        """
+        print('reset heartbeat')
+        if self.heartbeat_timer:
+            self.heartbeat_timer.cancel()
+        self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
+        self.heartbeat_timer.daemon = True
+        self.heartbeat_timer.start()
 
     def sendAppendEntry(self, server_id):
         """
