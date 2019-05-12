@@ -17,10 +17,11 @@ from threading import Timer
 
 
 class Server:
-    def __init__(self, server_id):
+    def __init__(self, server_id, num_nodes = 3):
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
 
+        self.num_nodes = num_nodes
         self.clients = {}
         self.clients_con = []
         self.addresses = {}
@@ -45,12 +46,15 @@ class Server:
 
         # become candidate after timeout
 
-        if self.role != 'leader':
-            self.election_timer = Timer(self.election_timeout, self.start_election)
-            self.election_timer.daemon = True
-            self.election_timer.start()
-        else:
-            self.election_timer = None
+        self.election_log = {}
+        self.vote_log = {}
+
+        # if self.role != 'leader':
+        self.election_timer = Timer(self.election_timeout, self.start_election)
+        self.election_timer.daemon = True
+        self.election_timer.start()
+        # else:
+        #      self.election_timer = None
 
         Thread(target=self.start())
         # self.sendMessage('2', {'1':1})
@@ -72,11 +76,13 @@ class Server:
         """
 
         self.role = 'candidate'
-        # self.leader_id = None
+        self.leader_id = None
         self.resetElectionTimeout()
         self.current_term += 1
         self.votes = [self.server_id]
-        self.voted_for = self.server_id
+        # self.voted_for = self.server_id
+        self.election_log[self.current_term] = self.votes
+        self.vote_log[self.current_term] = self.server_id
         self.server.requestVote()
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
@@ -95,7 +101,6 @@ class Server:
             msg, address = self.listener.recvfrom(4096)
             msg = json.loads(msg)
             self.handleIncommingMessage(msg)
-            print(msg)
 
     # new_add
     def handleIncommingMessage(self, msg):
@@ -108,9 +113,7 @@ class Server:
             self.handleRequestVote(msg)
         # 2. requestVoteReply RPC
         elif msg_type == 'REQ_VOTE_REPLY':
-            follower_id, follower_term, vote_granted \
-                = json.loads(json.dumps(eval(('[%s]' % content.decode()))))
-            self.handleRequestVoteReply()
+            self.handleRequestVoteReply(msg)
 
     # new_add
     def requestVote(self):
@@ -139,31 +142,68 @@ class Server:
             self.requestVoteReply(candidate_id, False)
             return
 
-
         self.current_term = max(candidate_term, self.current_term)
-        grant_vote = (not self.voted_for or self.voted_for == candidate_id) and \
-                     candidate_log_index >= self.getLatest()[1]
-        if grant_vote:
-            self.stepDown()
-            self.voted_for = candidate_id
-            logging.debug('voted for DC-{} in term {}'
-                          .format(candidate_id, self.current_term))
-        dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
-        filename = "./state" + self.datacenter_id + '.pkl'
-        fileobj = open(filename, 'wb')
-        pickle.dump(dictobj, fileobj)
-        fileobj.close()
-        self.server.requestVoteReply(
-            candidate_id, self.current_term, grant_vote)
+        grant_vote = False
+        if candidate_id not in self.vote_log:
+            # self.stepDown()
+            self.role = 'follower'
+            self.vote_log[self.current_term] = candidate_id
+            print('voted for DC-{} in term {}'.format(candidate_id, self.current_term))
+            grant_vote = True
+
+        self.requestVoteReply(candidate_id, grant_vote)
+
+    def handleRequestVoteReply(self, msg):
+        """
+        handle the reply from requestVote RPC
+        :type follower_id: str
+        :type follower_term: int
+        :type vote_granted: bool
+        """
+
+        follower_id = msg['server_id']
+        follower_term = msg['current_term']
+        vote_granted = msg['Decision']
+
+        if vote_granted:
+            self.votes.append(follower_id)
+            self.election_log[self.current_term] = self.votes
+            print('get another vote in term {}, votes got: {}'.format(self.current_term, self.votes))
+
+            if not self.isLeader() and self.enoughForLeader():
+                self.becomeLeader()
+        else:
+            if follower_term > self.current_term:
+                self.current_term = follower_term
+                dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
+                filename = "./state" + self.datacenter_id + '.pkl'
+                fileobj = open(filename, 'wb')
+                pickle.dump(dictobj, fileobj)
+                fileobj.close()
+                self.stepDown()
+
+    def enoughForLeader(self):
+        """
+        Given a list of servers who voted, find out whether it
+        is enough to get a majority based on the current config
+        :rtype: bool
+        """
+        return np.unique(np.array(self.votes)).shape[0] > self.num_nodes/2
+
+    def isLeader(self):
+        """
+        determine if the current server is the leader
+        """
+        return self.server_id == self.leader_id
 
     # new_add
     def requestVoteReply(self, target_id, grant_vote):
         # send reply to requestVote message
-            message = {'Command': 'REQ_VOTE_REPLY', 'server_id': self.server_id, 'current_term': self.current_term,
-                       'Decision': grant_vote}
-            self.sendMessage(target_id, message)
+        message = {'Command': 'REQ_VOTE_REPLY', 'server_id': self.server_id, 'current_term': self.current_term,
+                   'Decision': grant_vote}
+        self.sendMessage(target_id, message)
 
-        # Timer(CONFIG['messageDelay'], sendMsg).start()
+    # Timer(CONFIG['messageDelay'], sendMsg).start()
 
     # new_add
     def sendMessage(self, server_id, message):
@@ -181,6 +221,9 @@ class Server:
 
         # peer_socket.connect(addr)
         # self.all_socket[port].send(message)
+
+
+
 
     # new_add
     def resetElectionTimeout(self):
