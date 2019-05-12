@@ -2,21 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/PythonChatroom-master.zip" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/README.md" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/client.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/config.json" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/datacenter.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/server.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft/state_ini.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/README.md" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/client.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/config.json" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/datacenter.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/server.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/raft_update/state_ini.py" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/server_updated.py" afterPath="" />
+      <change beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -27,14 +13,32 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="client.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/client.py">
+      <file leaf-file-name="server.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="791">
-              <caret line="71" column="26" lean-forward="false" selection-start-line="71" selection-start-column="26" selection-end-line="71" selection-end-column="26" />
-              <folding>
-                <element signature="e#0#47#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="401">
+              <caret line="34" column="32" lean-forward="true" selection-start-line="34" selection-start-column="32" selection-end-line="34" selection-end-column="32" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="datacenter.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3031">
+              <caret line="246" column="31" lean-forward="true" selection-start-line="246" selection-start-column="31" selection-end-line="246" selection-end-column="31" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/server.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1827">
+              <caret line="218" column="29" lean-forward="false" selection-start-line="218" selection-start-column="29" selection-end-line="218" selection-end-column="29" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -45,6 +49,18 @@
             <state relative-caret-position="15">
               <caret line="1" column="14" lean-forward="false" selection-start-line="1" selection-start-column="3" selection-end-line="1" selection-end-column="14" />
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="client.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/client.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="311">
+              <caret line="39" column="27" lean-forward="true" selection-start-line="39" selection-start-column="27" selection-end-line="39" selection-end-column="27" />
+              <folding>
+                <element signature="e#0#47#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -141,6 +157,11 @@
             <path>
               <item name="Distributed-Chat-Room-Raft" type="b2602c69:ProjectViewProjectNode" />
               <item name="Distributed-Chat-Room-Raft" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Distributed-Chat-Room-Raft" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Distributed-Chat-Room-Raft" type="462c0819:PsiDirectoryNode" />
+              <item name="raft_raw_update" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -239,8 +260,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/raft/state_ini.py" />
-    <entry file="file://$PROJECT_DIR$/auction/auctionsystem/client.py" />
     <entry file="file://$PROJECT_DIR$/auction/auctionsystem/udp/server.py" />
     <entry file="file://$PROJECT_DIR$/raft/client.py" />
     <entry file="file://$PROJECT_DIR$/raft/datacenter.py" />
@@ -343,16 +362,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/server.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="205" column="42" lean-forward="true" selection-start-line="205" selection-start-column="42" selection-end-line="205" selection-end-column="42" />
-          <folding>
-            <element signature="e#64#84#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/raft_update/datacenter.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="397">
@@ -363,11 +372,35 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/client.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="791">
-          <caret line="71" column="26" lean-forward="false" selection-start-line="71" selection-start-column="26" selection-end-line="71" selection-end-column="26" />
+        <state relative-caret-position="311">
+          <caret line="39" column="27" lean-forward="true" selection-start-line="39" selection-start-column="27" selection-end-line="39" selection-end-column="27" />
           <folding>
             <element signature="e#0#47#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="401">
+          <caret line="34" column="32" lean-forward="true" selection-start-line="34" selection-start-column="32" selection-end-line="34" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3031">
+          <caret line="246" column="31" lean-forward="true" selection-start-line="246" selection-start-column="31" selection-end-line="246" selection-end-column="31" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1827">
+          <caret line="218" column="29" lean-forward="false" selection-start-line="218" selection-start-column="29" selection-end-line="218" selection-end-column="29" />
+          <folding />
         </state>
       </provider>
     </entry>

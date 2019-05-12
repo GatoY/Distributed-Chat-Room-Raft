@@ -5,7 +5,7 @@ import sys
 import json
 import random
 from threading import Timer
-
+import numpy as np
 
 #
 #
@@ -13,8 +13,16 @@ from threading import Timer
 #        {'REQ_VOTE_REPLY'}
 #        {'LOG'}
 #        {'HEART_BEAT'}
+#   Log status:         # Uncommit Commited Applied
 #
-
+#   AppendEntries RPC: HeartBeat, InfoSyn
+#   # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
+#
+#   RPC Reply: CurrentTerm, Success
+#
+#
+#
+#
 
 class Server:
     def __init__(self, server_id, num_nodes = 3):
@@ -37,6 +45,8 @@ class Server:
         self.listener = socket(AF_INET, SOCK_DGRAM)
         self.listener.bind((self.HOST, self.server_port[server_id]['server_port']))
 
+        self.CommitIndex = 0
+        self.LastApplied = 0
         self.server_id = server_id
         self.current_term = 0
         self.timeout = 3
@@ -50,6 +60,8 @@ class Server:
         self.vote_log = {}
 
         # if self.role != 'leader':
+        print(self.election_timeout)
+
         self.election_timer = Timer(self.election_timeout, self.start_election)
         self.election_timer.daemon = True
         self.election_timer.start()
@@ -74,7 +86,7 @@ class Server:
         """
                 start the election process
         """
-
+        print('start election')
         self.role = 'candidate'
         self.leader_id = None
         self.resetElectionTimeout()
@@ -83,17 +95,17 @@ class Server:
         # self.voted_for = self.server_id
         self.election_log[self.current_term] = self.votes
         self.vote_log[self.current_term] = self.server_id
-        self.server.requestVote()
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
         print('become candidate for term {}'.format(self.current_term))
 
         # handle the case where only one server is left
-        # if not self.isLeader() and self.enoughForLeader(self.votes):
-        #     self.becomeLeader()
-
+        if not self.isLeader() and self.enoughForLeader():
+            self.becomeLeader()
+            return
         # send RequestVote to all other servers
         # (index & term of last log entry)
+        self.requestVote()
 
     def rec_msg(self):
         print('rec msg')
@@ -204,6 +216,7 @@ class Server:
         # self.nextIndices = dict([(center_id, self.getLatest()[1]+1)
         #                          for center_id in self.getAllCenterID()
         #                          if center_id != self.datacenter_id])
+        print('send heartbeat')
 
         self.sendHeartbeat()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
@@ -290,6 +303,8 @@ class Server:
         if self.election_timer:
             self.election_timer.cancel()
         # need to restart election if the election failed
+        print('reset ElectionTimeout')
+        return
         self.election_timer = Timer(self.election_timeout, self.start_election())
         self.election_timer.daemon = True
         self.election_timer.start()
@@ -343,5 +358,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    server = Server(str(sys.argv[1]))
+    server = Server(str(sys.argv[1]), int(sys.argv[2]))
     server.start()
