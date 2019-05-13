@@ -144,6 +144,7 @@ class Server:
         self.LastApplied = len(log) - 1
         self.log = log
 
+    # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
         term = msg['current_term']
         if term < self.current_term:
@@ -269,6 +270,8 @@ class Server:
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
 
+
+
     def sendHeartbeat(self):
         """
         Send heartbeat message to all pears in the latest configuration
@@ -298,17 +301,72 @@ class Server:
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
 
+    # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
+
+    def appendEntry(self, target_id, prev_log_idx,
+                    prev_log_term, entries):
+        msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
+               'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
+        self.sendMessage(target_id, msg)
+
     def sendAppendEntry(self, server_id):
         """
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        msg = {'Command': 'log', 'log': self.log}
-        self.sendMessage(server_id, msg)
-        # self.server.appendEntry(center_id, self.current_term,
-        #                         prevEntry.index, prevEntry.term,
-        #                         self.log[self.nextIndices[center_id]:],
-        #                         self.commit_idx)
+        prevEntry = self.log[self.nextIndices[server_id] - 1]
+        self.appendEntry(server_id, prevEntry.index, prevEntry.term, self.log[self.nextIndices[serverId]:])
+
+    def handleAppendEntryReply(self, follower_id, follower_term, success,
+                               follower_last_index):
+        """
+        handle replies to appendEntry message
+        decide if an entry can be committed
+        :type follower_id: str
+        :type follower_term: int
+        :type success: bool
+        :type follower_last_index: int
+        """
+        logging.getLogger().setLevel(logging.DEBUG)
+        if follower_term > self.current_term:
+            self.current_term = follower_term
+            dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
+            filename = "./state"+self.datacenter_id+'.pkl'
+            fileobj = open(filename, 'wb')
+            pickle.dump(dictobj, fileobj)
+            fileobj.close()
+            self.stepDown()
+            return
+        # if I am no longer the leader, ignore the message
+        if not self.isLeader(): return
+        # if the leader is still in it's term
+        # adjust nextIndices for follower
+        if self.nextIndices[follower_id] != follower_last_index + 1:
+            self.nextIndices[follower_id] = follower_last_index + 1
+            logging.debug('update nextIndex of {} to {}'
+                          .format(follower_id, follower_last_index + 1))
+        if not success:
+            self.sendAppendEntry(follower_id)
+            return
+        # check if there is any log entry committed
+        # to do that, we need to keep tabs on the successfully
+        # committed entries
+        self.loggedIndices[follower_id] = follower_last_index
+        # find out the index most followers have reached
+        majority_idx = self.maxQualifiedIndex(self.loggedIndices)
+        logging.debug('the index logged by majority is {0}'
+                      .format(majority_idx))
+        # commit entries only when at least one entry in current term
+        # has reached majority
+        if self.log[majority_idx].term != self.current_term:
+            return
+        # if we have something to commit
+        # if majority_idx < self.commit_idx, do nothing
+        if majority_idx != self.commit_idx:
+            logging.info('log committed upto {}'.format(majority_idx))
+        old_commit_idx = self.commit_idx
+        self.commit_idx = max(self.commit_idx, majority_idx)
+        list(map(self.commitEntry, self.log[old_commit_idx+1:majority_idx+1]))
 
     def enoughForLeader(self):
         """
@@ -387,6 +445,8 @@ class Server:
         entry = {'current_term': self.current_term, 'LeaderId': self.leader_id, 'PrevLogIndex': PrevLogIndex,
                  'PrevLogTerm': PrevLogTerm, 'Entries': msg}
         self.log.append(entry)
+        entry['server_id'] = self.server_id
+        entry['Command'] = 'ClientRequest'
         self.CommitIndex += 1
         if self.server_id != self.leader_id:
             self.sendMessage(self.leader_id, entry)
