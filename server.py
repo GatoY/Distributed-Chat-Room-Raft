@@ -48,13 +48,15 @@ class Server:
 
         self.CommitIndex = 0
         self.LastApplied = 0
+        self.nextIndices = {}
+
         self.server_id = server_id
         self.current_term = 0
         self.timeout = 3
         self.heartbeat_timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
-        self.nextIndices = {}
+
 
         # become candidate after timeout
 
@@ -376,7 +378,8 @@ class Server:
     def rec_client(self, msg):
         print('receive client request')
         # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
-        entry = {'Command': 'ClientRequest', 'current_term': self.current_term, 'LeaderId': self.leader_id,
+        PrevLogIndex
+        entry = {'current_term': self.current_term, 'LeaderId': self.leader_id,
                  'Entries': msg, 'CommitIndex': self.CommitIndex, 'LastApplied': self.LastApplied,
                  'server_id': self.server_id}
         self.log.append(entry)
