@@ -335,10 +335,12 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        print(self.nextIndices)
         prevEntry = self.log[self.nextIndices[server_id] - 1]
         #$%
-        self.appendEntry(server_id, prevEntry.index, prevEntry.term, self.log[self.nextIndices[serverId]])
+        print(prevEntry)
+
+
+        self.appendEntry(server_id, prevEntry['index'], prevEntry['term'], self.log[self.nextIndices[server_id]])
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
@@ -560,4 +562,11 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         # print('KeyboardInterrupt')
-        os.system('python3 state_ini.py 5')
+        server_id = server.server_id
+        CONFIG = json.load(open("config.json"))
+        CONFIG['server_on'].remove(server_id)
+        json.dump(CONFIG, open('config.json', 'w'))
+        # os.system('python3 state_ini.py 5')
+
+
+
