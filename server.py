@@ -39,6 +39,8 @@ class Server:
         except:
             print('no more place for another server!')
             sys.exit(1)
+
+        self.leader_id = None
         json.dump(CONFIG, open('config.json', 'w'))
 
         self.server_port = CONFIG['server_port']
@@ -127,7 +129,7 @@ class Server:
         self.current_term += 1
         self.votes = [self.server_id]
         # self.voted_for = self.server_id
-        self.vote_log[self.current_term] = self.server_id
+        self.vote_log[self.current_term] = [self.server_id]
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
         print('become candidate for term {}'.format(self.current_term))
@@ -264,7 +266,7 @@ class Server:
         self.resetElectionTimeout()
         # convert to follower, not sure what's needed yet
         self.role = 'follower'
-        self.vote_log[self.current_term] = None
+        self.vote_log[self.current_term] = []
 
     def becomeLeader(self):
         """
@@ -327,7 +329,7 @@ class Server:
     def appendEntry(self, target_id, prev_log_idx,
                     prev_log_term, entries):
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
-               'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex}
+               'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex, 'LeaderId': self.server_id}
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -344,6 +346,7 @@ class Server:
         self.log.append(msg['Entries'])
         msg['Command'] = 'AppendEntryConfirm'
         msg['Confirm'] = 'True'
+        self.leader_id = msg['LeaderId']
         self.sendMessage(self.leader_id, msg)
 
     # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
