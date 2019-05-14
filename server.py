@@ -289,7 +289,6 @@ class Server:
               in the newly committed config, but also to the old ones
         """
 
-        print('bong')
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
         server_on_list = CONFIG['server_on']
@@ -303,7 +302,6 @@ class Server:
         """z
         reset heartbeat timeout
         """
-        print('reset heartbeat')
         if self.heartbeat_timer:
             self.heartbeat_timer.cancel()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
@@ -317,6 +315,7 @@ class Server:
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
+        print('send entry heartbeat %s' % entries)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -325,18 +324,12 @@ class Server:
         :type center_id: str
         """
         prevEntry = self.log[self.nextIndices[server_id] - 1]
-        #$%
-        print('-------------------------')
-        print(self.log)
-        print('=========================')
-        print(self.nextIndices)
-        print('0000000000000000000000000')
-        print(server_id)
         self.appendEntry(server_id, prevEntry['index'], prevEntry['term'], self.log[self.nextIndices[server_id]])
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
     def CommitEntry(self, msg):
+        self.resetElectionTimeout()
         if msg['Entries'] in self.log:
             return
         self.log.append(msg['Entries'])
