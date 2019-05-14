@@ -33,7 +33,11 @@ class Server:
             if i not in server_on_list:
                 self.server_id = i
                 break
-        CONFIG['server_on'].append(self.server_id)
+        try:
+            CONFIG['server_on'].append(self.server_id)
+        except:
+            print('no more place for another server!')
+            sys.exit(1)
         json.dump(CONFIG, open('config.json', 'w'))
 
         self.server_port = CONFIG['server_port']
@@ -303,7 +307,7 @@ class Server:
         server_on_list = CONFIG['server_on']
         for server_id in self.server_port:
             if server_id != self.server_id and server_id in server_on_list:
-                self.sendMessage(server_id, message)
+                self.sendAppendEntry(server_id)
 
         self.resetHeartbeatTimeout()
 
@@ -325,6 +329,7 @@ class Server:
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex}
         self.sendMessage(target_id, msg)
+
 
     def sendAppendEntry(self, server_id):
         """
@@ -544,5 +549,6 @@ class Server:
 
 
 if __name__ == "__main__":
+
     server = Server()
     server.start()
