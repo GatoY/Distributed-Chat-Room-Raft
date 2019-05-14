@@ -54,7 +54,7 @@ class Server:
 
         self.server.bind((self.HOST, self.server_port[self.server_id]['port']))
         self.server.listen(5)
-        log = {'Content': '', 'term': 0}
+        log = {'Content': '', 'term': 0, 'index': 0}
         self.log = [log]
 
         self.listener = socket(AF_INET, SOCK_DGRAM)
@@ -69,7 +69,7 @@ class Server:
         self.timeout = 5
         self.heartbeat_timeout = 1
         self.role = 'follower'
-        self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
+        self.election_timeout = random.uniform(self.timeout, 1.2 * self.timeout)
 
         # become candidate after timeout
 
@@ -161,8 +161,6 @@ class Server:
             msg = json.loads(msg)
             self.handleIncommingMessage(msg)
 
-
-
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
         # term = msg['current_term']
@@ -244,7 +242,8 @@ class Server:
 
         if vote_granted:
             self.vote_log[self.current_term].append(follower_id)
-            print('get another vote in term {}, votes got: {}'.format(self.current_term, self.vote_log[self.current_term]))
+            print('get another vote in term {}, votes got: {}'.format(self.current_term,
+                                                                      self.vote_log[self.current_term]))
             if not self.isLeader() and self.enoughForLeader():
                 self.becomeLeader()
         else:
@@ -281,7 +280,7 @@ class Server:
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
         # initialize a record of nextIdx
-        self.nextIndices = dict([(server_id, self.log[-1].index + 1)
+        self.nextIndices = dict([(server_id, len(self.log))
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
         print('send heartbeat')
@@ -289,7 +288,6 @@ class Server:
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
-
 
     def sendHeartbeat(self):
         """
@@ -328,7 +326,8 @@ class Server:
     def appendEntry(self, target_id, prev_log_idx,
                     prev_log_term, entries):
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
-               'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex, 'LeaderId': self.server_id}
+               'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
+               'LeaderId': self.server_id}
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -336,7 +335,9 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
+        print(self.nextIndices)
         prevEntry = self.log[self.nextIndices[server_id] - 1]
+        #$%
         self.appendEntry(server_id, prevEntry.index, prevEntry.term, self.log[self.nextIndices[serverId]])
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
@@ -423,7 +424,8 @@ class Server:
         """
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
-        print('enough for leader? %s > %s' % (np.unique(np.array(self.vote_log[self.current_term])).shape[0], len(server_on_list) / 2))
+        print('enough for leader? %s > %s' % (
+        np.unique(np.array(self.vote_log[self.current_term])).shape[0], len(server_on_list) / 2))
         return np.unique(np.array(self.vote_log[self.current_term])).shape[0] > len(server_on_list) / 2
 
     def isLeader(self):
@@ -491,15 +493,15 @@ class Server:
 
     def rec_client(self, content):
         print('receive client request')
-        msg = {'Command': 'ClientRequest', 'Content': content, 'term': self.current_term}
+        msg = {'Command': 'ClientRequest', 'Content': content, 'term': self.current_term, 'index': len(self.log)}
         if self.server_id != self.leader_id:
             print(' Transfer to leader')
             self.sendMessage(self.leader_id, msg)
         else:
             del msg['Command']
             self.log.append(msg)
-            self.CommitIndex+=1
-            self.LastApplied+=1
+            self.CommitIndex += 1
+            self.LastApplied += 1
             self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.
