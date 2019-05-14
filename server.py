@@ -52,7 +52,7 @@ class Server:
 
         self.server.bind((self.HOST, self.server_port[self.server_id]['port']))
         self.server.listen(5)
-        log = {'Content': '', 'term': self.0}
+        log = {'Content': '', 'term': 0}
         self.log = [log]
 
         self.listener = socket(AF_INET, SOCK_DGRAM)

@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
-    </list>
+    <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -46,8 +44,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="232">
-              <caret line="507" column="18" lean-forward="false" selection-start-line="507" selection-start-column="18" selection-end-line="507" selection-end-column="18" />
+            <state relative-caret-position="-3473">
+              <caret line="297" column="30" lean-forward="true" selection-start-line="297" selection-start-column="30" selection-end-line="297" selection-end-column="30" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -110,7 +108,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>resetHeartbeatTimeout</find>
       <find>resetElectionTimeout</find>
       <find>AppendEntries</find>
       <find>AppendEntrie</find>
@@ -140,6 +137,7 @@
       <find>getLatest</find>
       <find>appendEntry</find>
       <find>self.log</find>
+      <find>election_log</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -509,8 +507,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="232">
-          <caret line="507" column="18" lean-forward="false" selection-start-line="507" selection-start-column="18" selection-end-line="507" selection-end-column="18" />
+        <state relative-caret-position="-3473">
+          <caret line="297" column="30" lean-forward="true" selection-start-line="297" selection-start-column="30" selection-end-line="297" selection-end-column="30" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>
