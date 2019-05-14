@@ -57,13 +57,11 @@ class Server:
         self.nextIndices = {}
         self.loggedIndices = {}
 
-        self.server_id = server_id
         self.current_term = 0
         self.timeout = 3
         self.heartbeat_timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
-
 
         # become candidate after timeout
 
@@ -118,6 +116,19 @@ class Server:
         # send RequestVote to all other servers
         # (index & term of last log entry)
         self.requestVote()
+
+    def resetElectionTimeout(self):
+        """
+        reset election timeout
+        """
+        if self.election_timer:
+            self.election_timer.cancel()
+        # need to restart election if the election failed
+        print('reset ElectionTimeout')
+        self.election_timer = Timer(self.election_timeout, self.start_election)
+        self.election_timer.daemon = True
+        self.election_timer.start()
+        print('reset election count down')
 
     def rec_msg(self):
         print('rec msg')
@@ -244,7 +255,7 @@ class Server:
         self.resetElectionTimeout()
         # convert to follower, not sure what's needed yet
         self.role = 'follower'
-        self.vote_log[self.current_term]= None
+        self.vote_log[self.current_term] = None
 
     def becomeLeader(self):
         """
@@ -345,7 +356,7 @@ class Server:
         follower_id = msg['server_id']
         follower_term = msg['current_term']
         success = msg['Confirm']
-        follower_last_index = msg['PrevLogIndex']+1
+        follower_last_index = msg['PrevLogIndex'] + 1
 
         if follower_term > self.current_term:
             self.current_term = follower_term
@@ -376,11 +387,10 @@ class Server:
         # if majority_idx < self.commit_idx, do nothing
         old_commit_idx = self.commit_idx
         self.commit_idx = max(self.commit_idx, majority_idx)
-        #TODO
+        # TODO
         list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
 
         self.broadcast_client(msg['Entries'])
-
 
     def maxQualifiedIndex(self, indices):
         """
@@ -407,6 +417,7 @@ class Server:
         """
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
+        print('enough for leader? %s > %s' % (np.unique(np.array(self.votes)).shape[0], len(server_on_list) / 2))
         return np.unique(np.array(self.votes)).shape[0] > len(server_on_list) / 2
 
     def isLeader(self):
@@ -441,18 +452,7 @@ class Server:
         # peer_socket.connect(addr)
         # self.all_socket[port].send(message)
 
-    # new_add
-    def resetElectionTimeout(self):
-        """
-        reset election timeout
-        """
-        if self.election_timer:
-            self.election_timer.cancel()
-        # need to restart election if the election failed
-        print('reset ElectionTimeout')
-        self.election_timer = Timer(self.election_timeout, self.start_election())
-        self.election_timer.daemon = True
-        self.election_timer.start()
+
 
     def accept_incoming_connections(self):
         """Sets up handling for incoming clients."""
