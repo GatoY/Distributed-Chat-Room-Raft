@@ -71,7 +71,6 @@ class Server:
 
         # become candidate after timeout
 
-        self.election_log = {}
         self.vote_log = {}
         self.heartbeat_timer = None
 
@@ -89,6 +88,25 @@ class Server:
         Thread(target=self.rec_msg())
 
         print('server running at ip: %s, port: %s' % (self.HOST, self.PORT))
+
+    # new_add
+    def handleIncommingMessage(self, msg):
+        # handle incomming messages
+        # Message types:
+        # messages from servers
+        # 1. requestVote RPC
+        msg_type = msg['Command']
+        if msg_type == 'REQ_VOTE':
+            self.handleRequestVote(msg)
+        # 2. requestVoteReply RPC
+        elif msg_type == 'REQ_VOTE_REPLY':
+            self.handleRequestVoteReply(msg)
+        elif msg_type == 'ClientRequest':
+            self.handelClientRequest(msg)
+        elif msg_type == 'AppendEntry':
+            self.CommitEntry(msg)
+        elif msg_type == 'AppendEntryConfirm':
+            self.handleAppendEntryReply(msg)
 
     def start(self):
         print("Waiting for connection...")
@@ -109,7 +127,6 @@ class Server:
         self.current_term += 1
         self.votes = [self.server_id]
         # self.voted_for = self.server_id
-        self.election_log[self.current_term] = self.votes
         self.vote_log[self.current_term] = self.server_id
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
@@ -143,24 +160,7 @@ class Server:
             msg = json.loads(msg)
             self.handleIncommingMessage(msg)
 
-    # new_add
-    def handleIncommingMessage(self, msg):
-        # handle incomming messages
-        # Message types:
-        # messages from servers
-        # 1. requestVote RPC
-        msg_type = msg['Command']
-        if msg_type == 'REQ_VOTE':
-            self.handleRequestVote(msg)
-        # 2. requestVoteReply RPC
-        elif msg_type == 'REQ_VOTE_REPLY':
-            self.handleRequestVoteReply(msg)
-        elif msg_type == 'ClientRequest':
-            self.handelClientRequest(msg)
-        elif msg_type == 'AppendEntry':
-            self.CommitEntry(msg)
-        elif msg_type == 'AppendEntryConfirm':
-            self.handleAppendEntryReply(msg)
+
 
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
@@ -217,9 +217,13 @@ class Server:
         self.current_term = max(candidate_term, self.current_term)
         grant_vote = False
         if candidate_id not in self.vote_log:
-            # self.stepDown()
+            self.stepDown()
             self.role = 'follower'
-            self.vote_log[self.current_term] = candidate_id
+            if self.current_term not in self.vote_log:
+                self.vote_log[self.current_term] = [candidate_id]
+            else:
+                self.vote_log[self.current_term].append(candidate_id)
+
             print('voted for DC-{} in term {}'.format(candidate_id, self.current_term))
             grant_vote = True
 
@@ -239,9 +243,7 @@ class Server:
 
         if vote_granted:
             self.votes.append(follower_id)
-            self.election_log[self.current_term] = self.votes
             print('get another vote in term {}, votes got: {}'.format(self.current_term, self.votes))
-
             if not self.isLeader() and self.enoughForLeader():
                 self.becomeLeader()
         else:
@@ -275,26 +277,13 @@ class Server:
 
         self.role = 'leader'
         self.leader_id = self.server_id
-        # keep track of the entries known to be logged in each data center
-        # note that when we are in the transition phase
-        # we as the leader need to keep track of nodes in
-        # the old and the new config
-        # self.loggedIndices = dict([(center_id, 0)
-        #                            for center_id in self.getAllCenterID()
-        #                            if center_id != self.datacenter_id])
-        # initialize a record of nextIdx
-        # self.nextIndices = dict([(center_id, self.getLatest()[1]+1)
-        #                          for center_id in self.getAllCenterID()
-        #                          if center_id != self.datacenter_id])
-        print('send heartbeat')
-
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
-
+        # initialize a record of nextIdx
         self.nextIndices = dict([(server_id, self.log[-1].index + 1)
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
-
+        print('send heartbeat')
         self.sendHeartbeat()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
         self.heartbeat_timer.daemon = True
@@ -505,7 +494,6 @@ class Server:
             print(' Transfer to leader')
             self.sendMessage(self.leader_id, msg)
         else:
-            # TODO
             del msg['Command']
             self.log.append(msg)
             self.CommitIndex+=1
