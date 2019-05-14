@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/raft_raw_update/datacenter.py" afterPath="$PROJECT_DIR$/raft_raw_update/datacenter.py" />
       <change beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -27,8 +26,8 @@
       <file leaf-file-name="datacenter.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="52">
-              <caret line="586" column="51" lean-forward="true" selection-start-line="586" selection-start-column="51" selection-end-line="586" selection-end-column="51" />
+            <state relative-caret-position="250">
+              <caret line="309" column="0" lean-forward="true" selection-start-line="309" selection-start-column="0" selection-end-line="324" selection-end-column="34" />
               <folding />
             </state>
           </provider>
@@ -37,8 +36,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="574">
-              <caret line="323" column="8" lean-forward="false" selection-start-line="323" selection-start-column="8" selection-end-line="323" selection-end-column="8" />
+            <state relative-caret-position="562">
+              <caret line="352" column="61" lean-forward="true" selection-start-line="352" selection-start-column="61" selection-end-line="352" selection-end-column="61" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -72,11 +71,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>requestVoteReply</find>
-      <find>handle</find>
-      <find>handleRequestVote</find>
-      <find>self.voted_for</find>
-      <find>stepdown</find>
       <find>handleRequestVoteReply</find>
       <find>self.votes</find>
       <find>self.isLeader</find>
@@ -100,8 +94,13 @@
       <find>follower_id</find>
       <find>handleAppendEntryReply</find>
       <find>commit</find>
-      <find>commitEntry</find>
       <find>commit_idx</find>
+      <find>self.voted_for</find>
+      <find>voted_for</find>
+      <find>clientRequestReply</find>
+      <find>loggedIndices</find>
+      <find>self.loggedIndices</find>
+      <find>commitEntry</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -393,6 +392,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="250">
+          <caret line="309" column="0" lean-forward="true" selection-start-line="309" selection-start-column="0" selection-end-line="324" selection-end-column="34" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="277">
@@ -401,18 +408,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="52">
-          <caret line="586" column="51" lean-forward="true" selection-start-line="586" selection-start-column="51" selection-end-line="586" selection-end-column="51" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="574">
-          <caret line="323" column="8" lean-forward="false" selection-start-line="323" selection-start-column="8" selection-end-line="323" selection-end-column="8" />
+        <state relative-caret-position="562">
+          <caret line="352" column="61" lean-forward="true" selection-start-line="352" selection-start-column="61" selection-end-line="352" selection-end-column="61" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>

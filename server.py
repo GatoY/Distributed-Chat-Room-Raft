@@ -49,6 +49,7 @@ class Server:
         self.CommitIndex = 0
         self.LastApplied = 0
         self.nextIndices = {}
+        self.loggedIndices = {}
 
         self.server_id = server_id
         self.current_term = 0
@@ -153,10 +154,10 @@ class Server:
         self.log.append(msg)
         self.sendHeartbeat()
 
-    def clientRequestReply(self, msg, answer):
-        # answer_msg = {'Command':}
-        # self.sendMessage(msg['server_id'], )
-        pass
+    # def clientRequestReply(self, msg, answer):
+    #     # answer_msg = {'Command':}
+    #     # self.sendMessage(msg['server_id'], )
+    #     pass
 
     # new_add
     def requestVote(self):
@@ -298,7 +299,7 @@ class Server:
     def appendEntry(self, target_id, prev_log_idx,
                     prev_log_term, entries):
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
-               'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
+               'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex}
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -331,7 +332,7 @@ class Server:
         follower_id = msg['server_id']
         follower_term = msg['current_term']
         success = msg['Confirm']
-        follower_last_index = msg['PrevLogIndex']
+        follower_last_index = msg['PrevLogIndex']+1
 
         if follower_term > self.current_term:
             self.current_term = follower_term
@@ -343,8 +344,7 @@ class Server:
         # adjust nextIndices for follower
         if self.nextIndices[follower_id] != follower_last_index + 1:
             self.nextIndices[follower_id] = follower_last_index + 1
-            logging.debug('update nextIndex of {} to {}'
-                          .format(follower_id, follower_last_index + 1))
+            print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
         if not success:
             self.sendAppendEntry(follower_id)
             return
@@ -367,6 +367,24 @@ class Server:
         old_commit_idx = self.commit_idx
         self.commit_idx = max(self.commit_idx, majority_idx)
         list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
+
+
+    def maxQualifiedIndex(self, indices):
+        """
+        Given a dictionary of datacenters and the max index in their log
+        we find of the maximum index that has reached a majority in
+        current configuration
+        """
+        # entry = self.getConfig()
+        # the leader keep its own record updated to the newest
+        indices[self.server_id] = len(self.log) - 1
+        # print('!!!!!', indices)
+        # if entry['config'] == 'single':
+        #     return sorted([indices[x] for x in entry['data']])[int((len(entry['data'])-1)/2)]
+        # maxOld = sorted([indices[x] for x in entry['data'][0]])[int((len(entry['data'][0])-1)/2)]
+        # maxNew = sorted([indices[x] for x in entry['data'][1]])[int((len(entry['data'][1])-1)/2)]
+
+        return min(indices.values)
 
     def enoughForLeader(self):
         """
