@@ -354,18 +354,16 @@ class Server:
         self.loggedIndices[follower_id] = follower_last_index
         # find out the index most followers have reached
         majority_idx = self.maxQualifiedIndex(self.loggedIndices)
-        logging.debug('the index logged by majority is {0}'
-                      .format(majority_idx))
+        print('the index logged by majority is {0}'.format(majority_idx))
         # commit entries only when at least one entry in current term
         # has reached majority
         if self.log[majority_idx].term != self.current_term:
             return
         # if we have something to commit
         # if majority_idx < self.commit_idx, do nothing
-        if majority_idx != self.commit_idx:
-            logging.info('log committed upto {}'.format(majority_idx))
         old_commit_idx = self.commit_idx
         self.commit_idx = max(self.commit_idx, majority_idx)
+        #TODO
         list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
 
 
@@ -435,7 +433,6 @@ class Server:
             self.election_timer.cancel()
         # need to restart election if the election failed
         print('reset ElectionTimeout')
-        return
         self.election_timer = Timer(self.election_timeout, self.start_election())
         self.election_timer.daemon = True
         self.election_timer.start()
