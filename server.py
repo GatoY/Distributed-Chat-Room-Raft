@@ -28,6 +28,12 @@ import numpy as np
 class Server:
     def __init__(self, server_id, num_nodes=3):
         CONFIG = json.load(open("config.json"))
+        if 'server_on' in CONFIG:
+            CONFIG['server_on'].append(server_id)
+        else:
+            CONFIG['server_on'] = [server_id]
+        json.dump(CONFIG, open('config.json', 'w'))
+
         self.server_port = CONFIG['server_port']
 
         self.num_nodes = num_nodes
@@ -57,6 +63,7 @@ class Server:
         self.heartbeat_timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
+
 
         # become candidate after timeout
 
@@ -163,6 +170,8 @@ class Server:
     def requestVote(self):
         # broadcast the request Vote message to all other datacenters
         message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term}
+        CONFIG = json.load(open("config.json"))
+        self.server_port = CONFIG['server_port']
         for server_id in self.server_port:
             if server_id != self.server_id:
                 self.sendMessage(server_id, message)
@@ -277,6 +286,8 @@ class Server:
         """
 
         print('bong')
+        CONFIG = json.load(open("config.json"))
+        self.server_port = CONFIG['server_port']
         for server_id in self.server_port:
             if server_id != self.server_id:
                 self.sendAppendEntry(server_id)
@@ -516,6 +527,8 @@ class Server:
     def broadcast(self, msg, name):  # prefix is for name identification.
         """Broadcasts a message to all the servers."""
         message = {'Command': 'Broadcast', 'msg': msg, 'name': name}
+        CONFIG = json.load(open("config.json"))
+        self.server_port = CONFIG['server_port']
         for server_id in self.server_port:
             if server_id != self.server_id:
                 print(message)
