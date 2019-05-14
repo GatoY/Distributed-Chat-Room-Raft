@@ -483,7 +483,6 @@ class datacenter(object):
         :type success: bool
         :type follower_last_index: int
         """
-        logging.getLogger().setLevel(logging.DEBUG)
         if follower_term > self.current_term:
             self.current_term = follower_term
             dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}

@@ -132,27 +132,28 @@ class Server:
             self.handleRequestVoteReply(msg)
         elif msg_type == 'ClientRequest':
             self.handelClientRequest(msg)
-        elif msg_type == 'log':
-            self.updateLog(msg['log'])
+        elif msg_type == 'AppendEntry':
+            self.CommitEntry(msg)
+        elif msg_type == 'APPEND_REPLY':
+            self.handleAppendEntryReply(msg)
 
-    def updateLog(self, log):
-        lenth = len(log)
-        self_len = len(self.log)
-        for i in range(self_len, lenth):
-            self.broadcast_client(log[i])
-
-        self.LastApplied = len(log) - 1
-        self.log = log
 
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
-        term = msg['current_term']
-        if term < self.current_term:
-            pass
-            # self.clientRequestReply(msg, False)
-        serverId = msg['server_id']
-        self.nextIndices[serverId] = msg['CommitIndex']
-        self.log.append(msg['Entries'])
+        # term = msg['current_term']
+        # if term < self.current_term:
+        #     pass
+        #     # self.clientRequestReply(msg, False)
+        # serverId = msg['server_id']
+        # self.nextIndices[serverId] = msg['CommitIndex']
+        # self.log.append(msg['Entries'])
+        # msg = {'Command': 'ClientRequest', 'Content': content, 'term'}
+
+        self.CommitIndex=len(self.log)-1
+        self.LastApplied=len(self.log)-1
+        self.log.append(msg)
+        self.sendHeartbeat()
+
 
     def clientRequestReply(self, msg, answer):
         # answer_msg = {'Command':}
@@ -305,7 +306,7 @@ class Server:
 
     def appendEntry(self, target_id, prev_log_idx,
                     prev_log_term, entries):
-        msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
+        msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
         self.sendMessage(target_id, msg)
 
@@ -315,10 +316,19 @@ class Server:
         :type center_id: str
         """
         prevEntry = self.log[self.nextIndices[server_id] - 1]
-        self.appendEntry(server_id, prevEntry.index, prevEntry.term, self.log[self.nextIndices[serverId]:])
+        self.appendEntry(server_id, prevEntry.index, prevEntry.term, self.log[self.nextIndices[serverId]])
 
-    def handleAppendEntryReply(self, follower_id, follower_term, success,
-                               follower_last_index):
+    # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
+    #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
+    def CommitEntry(self, msg):
+        self.log.append(msg['Entries'])
+        msg['Command'] = 'AppendEntryConfirm'
+        self.sendMessage(self.leader_id, msg)
+
+
+    # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
+    #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
+    def handleAppendEntryReply(self, msg):
         """
         handle replies to appendEntry message
         decide if an entry can be committed
@@ -327,14 +337,13 @@ class Server:
         :type success: bool
         :type follower_last_index: int
         """
-        logging.getLogger().setLevel(logging.DEBUG)
+        follower_id = msg['server_id']
+        follower_term=msg['current_term']
+        success = False
+        follower_last_index = msg['PrevLogIndex']
+
         if follower_term > self.current_term:
             self.current_term = follower_term
-            dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
-            filename = "./state"+self.datacenter_id+'.pkl'
-            fileobj = open(filename, 'wb')
-            pickle.dump(dictobj, fileobj)
-            fileobj.close()
             self.stepDown()
             return
         # if I am no longer the leader, ignore the message
@@ -432,25 +441,35 @@ class Server:
             self.addresses[client] = client_address
             Thread(target=self.handle_client, args=(client,)).start()
 
-    def rec_client(self, msg):
-        print('receive client request')
-        # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
-        if len(self.log) > 0:
-            PrevLogIndex = self.log[-1]['CommitIndex']
-            PrevLogTerm = self.log[-1]['current_term']
-        else:
-            PrevLogIndex = None
-            PrevLogTerm = None
+    # def rec_client(self, msg):
+    #     print('receive client request')
+    #     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
+    #     if len(self.log) > 0:
+    #         PrevLogIndex = self.log[-1]['CommitIndex']
+    #         PrevLogTerm = self.log[-1]['current_term']
+    #     else:
+    #         PrevLogIndex = None
+    #         PrevLogTerm = None
+    #
+    #     entry = {'current_term': self.current_term, 'LeaderId': self.leader_id, 'PrevLogIndex': PrevLogIndex,
+    #              'PrevLogTerm': PrevLogTerm, 'Entries': msg}
+    #     self.log.append(entry)
+    #     entry['server_id'] = self.server_id
+    #     entry['Command'] = 'ClientRequest'
+    #     self.CommitIndex += 1
+    #     if self.server_id != self.leader_id:
+    #         self.sendMessage(self.leader_id, entry)
+    #     else:
+    #         self.log.append(msg)
 
-        entry = {'current_term': self.current_term, 'LeaderId': self.leader_id, 'PrevLogIndex': PrevLogIndex,
-                 'PrevLogTerm': PrevLogTerm, 'Entries': msg}
-        self.log.append(entry)
-        entry['server_id'] = self.server_id
-        entry['Command'] = 'ClientRequest'
-        self.CommitIndex += 1
+    def rec_client(self, content):
+        print('receive client request')
+        msg = {'Command': 'ClientRequest', 'Content': content, 'term':self.current_term}
         if self.server_id != self.leader_id:
-            self.sendMessage(self.leader_id, entry)
+            print(' Transfer to leader')
+            self.sendMessage(self.leader_id, msg)
         else:
+            #TODO
             self.log.append(msg)
 
     def handle_client(self, client):  # Takes client socket as argument.
@@ -473,7 +492,7 @@ class Server:
                 msg = msg.decode('utf8')
                 # self.broadcast_client(msg)
                 # self.broadcast(msg, name + ": ")
-                self.rec_client(msg)
+                self.rec_client(name+': '+msg)
 
             else:
                 client.send(bytes("{quit}", "utf8"))

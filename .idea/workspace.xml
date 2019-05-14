@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="$PROJECT_DIR$/raft_raw_update/datacenter.py" afterPath="$PROJECT_DIR$/raft_raw_update/datacenter.py" />
       <change beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,8 +17,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="442">
-              <caret line="99" column="49" lean-forward="false" selection-start-line="91" selection-start-column="23" selection-end-line="99" selection-end-column="49" />
+            <state relative-caret-position="277">
+              <caret line="142" column="29" lean-forward="false" selection-start-line="142" selection-start-column="29" selection-end-line="142" selection-end-column="29" />
               <folding />
             </state>
           </provider>
@@ -27,8 +27,8 @@
       <file leaf-file-name="datacenter.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="284">
-              <caret line="389" column="0" lean-forward="false" selection-start-line="389" selection-start-column="0" selection-end-line="407" selection-end-column="23" />
+            <state relative-caret-position="52">
+              <caret line="586" column="51" lean-forward="true" selection-start-line="586" selection-start-column="51" selection-end-line="586" selection-end-column="51" />
               <folding />
             </state>
           </provider>
@@ -37,8 +37,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="310">
-              <caret line="149" column="36" lean-forward="true" selection-start-line="149" selection-start-column="36" selection-end-line="149" selection-end-column="36" />
+            <state relative-caret-position="574">
+              <caret line="323" column="8" lean-forward="false" selection-start-line="323" selection-start-column="8" selection-end-line="323" selection-end-column="8" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -72,15 +72,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>sendMe</find>
-      <find>sys</find>
-      <find>SOCK_DGRAM</find>
-      <find>waitConnection</find>
-      <find>bytes</find>
-      <find>sendMessage</find>
-      <find>rec_msg</find>
-      <find>self.clients</find>
-      <find>start</find>
       <find>requestVoteReply</find>
       <find>handle</find>
       <find>handleRequestVote</find>
@@ -97,11 +88,20 @@
       <find>rec</find>
       <find>current_term</find>
       <find>self.log</find>
-      <find>appendEntry</find>
       <find>heartbeat_timer</find>
       <find>resetHeartbeatTimeout</find>
       <find>resetElectionTimeout</find>
+      <find>AppendEntries</find>
+      <find>AppendEntrie</find>
+      <find>AppendEntr</find>
+      <find>appendEntry</find>
       <find>stepDown</find>
+      <find>Command</find>
+      <find>follower_id</find>
+      <find>handleAppendEntryReply</find>
+      <find>commit</find>
+      <find>commitEntry</find>
+      <find>commit_idx</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -122,6 +122,7 @@
         <option value="$PROJECT_DIR$/raft_update/config.json" />
         <option value="$PROJECT_DIR$/config.json" />
         <option value="$PROJECT_DIR$/client.py" />
+        <option value="$PROJECT_DIR$/raft_raw_update/datacenter.py" />
         <option value="$PROJECT_DIR$/server.py" />
       </list>
     </option>
@@ -394,24 +395,24 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="442">
-          <caret line="99" column="49" lean-forward="false" selection-start-line="91" selection-start-column="23" selection-end-line="99" selection-end-column="49" />
+        <state relative-caret-position="277">
+          <caret line="142" column="29" lean-forward="false" selection-start-line="142" selection-start-column="29" selection-end-line="142" selection-end-column="29" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/raft_raw_update/datacenter.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="284">
-          <caret line="389" column="0" lean-forward="false" selection-start-line="389" selection-start-column="0" selection-end-line="407" selection-end-column="23" />
+        <state relative-caret-position="52">
+          <caret line="586" column="51" lean-forward="true" selection-start-line="586" selection-start-column="51" selection-end-line="586" selection-end-column="51" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="310">
-          <caret line="149" column="36" lean-forward="true" selection-start-line="149" selection-start-column="36" selection-end-line="149" selection-end-column="36" />
+        <state relative-caret-position="574">
+          <caret line="323" column="8" lean-forward="false" selection-start-line="323" selection-start-column="8" selection-end-line="323" selection-end-column="8" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>
