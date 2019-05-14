@@ -137,7 +137,6 @@ class Server:
         elif msg_type == 'APPEND_REPLY':
             self.handleAppendEntryReply(msg)
 
-
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
         # term = msg['current_term']
@@ -149,11 +148,10 @@ class Server:
         # self.log.append(msg['Entries'])
         # msg = {'Command': 'ClientRequest', 'Content': content, 'term'}
 
-        self.CommitIndex=len(self.log)-1
-        self.LastApplied=len(self.log)-1
+        self.CommitIndex = len(self.log) - 1
+        self.LastApplied = len(self.log) - 1
         self.log.append(msg)
         self.sendHeartbeat()
-
 
     def clientRequestReply(self, msg, answer):
         # answer_msg = {'Command':}
@@ -220,27 +218,22 @@ class Server:
         else:
             if follower_term > self.current_term:
                 self.current_term = follower_term
-                dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for, 'log': self.log}
-                filename = "./state" + self.datacenter_id + '.pkl'
-                fileobj = open(filename, 'wb')
-                pickle.dump(dictobj, fileobj)
-                fileobj.close()
                 self.stepDown()
 
     def stepDown(self, new_leader=None):
-        logging.debug('update itself to term {}'.format(self.current_term))
+        print('update itself to term {}'.format(self.current_term))
         # if candidate or leader, step down and acknowledge the new leader
         if self.isLeader():
             # if the datacenter was leader
             self.heartbeat_timer.cancel()
         if new_leader != self.leader_id:
-            logging.info('leader become {}'.format(new_leader))
+            print('leader become {}'.format(new_leader))
         self.leader_id = new_leader
         # need to restart election if the election failed
         self.resetElectionTimeout()
         # convert to follower, not sure what's needed yet
         self.role = 'follower'
-        self.voted_for = None
+        self.vote_log[self.current_term]= None
 
     def becomeLeader(self):
         """
@@ -270,8 +263,6 @@ class Server:
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
-
-
 
     def sendHeartbeat(self):
         """
@@ -323,8 +314,8 @@ class Server:
     def CommitEntry(self, msg):
         self.log.append(msg['Entries'])
         msg['Command'] = 'AppendEntryConfirm'
+        msg['Confirm'] = 'True'
         self.sendMessage(self.leader_id, msg)
-
 
     # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
@@ -338,8 +329,8 @@ class Server:
         :type follower_last_index: int
         """
         follower_id = msg['server_id']
-        follower_term=msg['current_term']
-        success = False
+        follower_term = msg['current_term']
+        success = msg['Confirm']
         follower_last_index = msg['PrevLogIndex']
 
         if follower_term > self.current_term:
@@ -375,7 +366,7 @@ class Server:
             logging.info('log committed upto {}'.format(majority_idx))
         old_commit_idx = self.commit_idx
         self.commit_idx = max(self.commit_idx, majority_idx)
-        list(map(self.commitEntry, self.log[old_commit_idx+1:majority_idx+1]))
+        list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
 
     def enoughForLeader(self):
         """
@@ -464,12 +455,12 @@ class Server:
 
     def rec_client(self, content):
         print('receive client request')
-        msg = {'Command': 'ClientRequest', 'Content': content, 'term':self.current_term}
+        msg = {'Command': 'ClientRequest', 'Content': content, 'term': self.current_term}
         if self.server_id != self.leader_id:
             print(' Transfer to leader')
             self.sendMessage(self.leader_id, msg)
         else:
-            #TODO
+            # TODO
             self.log.append(msg)
 
     def handle_client(self, client):  # Takes client socket as argument.
@@ -492,7 +483,7 @@ class Server:
                 msg = msg.decode('utf8')
                 # self.broadcast_client(msg)
                 # self.broadcast(msg, name + ": ")
-                self.rec_client(name+': '+msg)
+                self.rec_client(name + ': ' + msg)
 
             else:
                 client.send(bytes("{quit}", "utf8"))
