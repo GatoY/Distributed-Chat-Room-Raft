@@ -26,8 +26,14 @@ import numpy as np
 #
 
 class Server:
-    def __init__(self, server_id, num_nodes=3):
+    def __init__(self):
         CONFIG = json.load(open("config.json"))
+        server_on_list = CONFIG['server_on']
+        all_server_id = CONFIG['server_port'].keys()
+        for i in all_server_id:
+            if i not in server_on_list:
+                self.server_id = i
+                break
         if 'server_on' in CONFIG:
             CONFIG['server_on'].append(server_id)
         else:
@@ -35,8 +41,6 @@ class Server:
         json.dump(CONFIG, open('config.json', 'w'))
 
         self.server_port = CONFIG['server_port']
-
-        self.num_nodes = num_nodes
         self.clients = {}
         self.clients_con = []
         self.addresses = {}
@@ -172,8 +176,9 @@ class Server:
         message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term}
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
+        server_on_list = CONFIG['server_on']
         for server_id in self.server_port:
-            if server_id != self.server_id:
+            if server_id != self.server_id and server_id in server_on_list:
                 self.sendMessage(server_id, message)
 
         # delay
@@ -288,9 +293,10 @@ class Server:
         print('bong')
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
+        server_on_list = CONFIG['server_on']
         for server_id in self.server_port:
-            if server_id != self.server_id:
-                self.sendAppendEntry(server_id)
+            if server_id != self.server_id and server_id in server_on_list:
+                self.sendMessage(server_id, message)
 
         self.resetHeartbeatTimeout()
 
@@ -403,7 +409,9 @@ class Server:
         is enough to get a majority based on the current config
         :rtype: bool
         """
-        return np.unique(np.array(self.votes)).shape[0] > self.num_nodes / 2
+        CONFIG = json.load(open("config.json"))
+        server_on_list = CONFIG['server_on']
+        return np.unique(np.array(self.votes)).shape[0] > len(server_on_list) / 2
 
     def isLeader(self):
         """
@@ -529,9 +537,9 @@ class Server:
         message = {'Command': 'Broadcast', 'msg': msg, 'name': name}
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
+        server_on_list = CONFIG['server_on']
         for server_id in self.server_port:
-            if server_id != self.server_id:
-                print(message)
+            if server_id != self.server_id and server_id in server_on_list:
                 self.sendMessage(server_id, message)
 
     def broadcast_client(self, msg, prefix=""):
@@ -540,5 +548,5 @@ class Server:
 
 
 if __name__ == "__main__":
-    server = Server(str(sys.argv[1]), int(sys.argv[2]))
+    server = Server()
     server.start()
