@@ -26,20 +26,9 @@ import os
 #
 #
 class Server:
-    def __init__(self):
-        CONFIG = json.load(open("config.json"))
-        server_on_list = CONFIG['server_on']
-        all_server_id = CONFIG['server_port'].keys()
-        for i in all_server_id:
-            if i not in server_on_list:
-                self.server_id = i
-                break
-        try:
-            CONFIG['server_on'].append(self.server_id)
-        except:
-            print('no more place for another server!')
-            sys.exit(1)
+    def __init__(self, server_id, CONFIG):
 
+        self.server_id = server_id
         self.leader_id = None
         json.dump(CONFIG, open('config.json', 'w'))
 
@@ -280,7 +269,7 @@ class Server:
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
         # initialize a record of nextIdx
-        self.nextIndices = dict([(server_id, len(self.log))
+        self.nextIndices = dict([(server_id, len(self.log)-1)
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
         print('send heartbeat')
@@ -337,14 +326,19 @@ class Server:
         """
         prevEntry = self.log[self.nextIndices[server_id] - 1]
         #$%
-        print(prevEntry)
-
-
+        print('-------------------------')
+        print(self.log)
+        print('=========================')
+        print(self.nextIndices)
+        print('0000000000000000000000000')
+        print(server_id)
         self.appendEntry(server_id, prevEntry['index'], prevEntry['term'], self.log[self.nextIndices[server_id]])
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
     def CommitEntry(self, msg):
+        if msg['Entries'] in self.log:
+            return
         self.log.append(msg['Entries'])
         msg['Command'] = 'AppendEntryConfirm'
         msg['Confirm'] = 'True'
@@ -555,14 +549,26 @@ class Server:
 
 
 if __name__ == "__main__":
+    CONFIG = json.load(open("config.json"))
+    server_on_list = CONFIG['server_on']
+    all_server_id = CONFIG['server_port'].keys()
+    for i in all_server_id:
+        if i not in server_on_list:
+            server_id = i
+            break
+    try:
+        CONFIG['server_on'].append(server_id)
+    except:
+        print('no more place for another server!')
+        sys.exit(1)
 
     try:
-        server = Server()
+        server = Server(server_id, CONFIG)
         server.start()
 
     except KeyboardInterrupt:
         # print('KeyboardInterrupt')
-        server_id = server.server_id
+        server_id = server_id
         CONFIG = json.load(open("config.json"))
         CONFIG['server_on'].remove(server_id)
         json.dump(CONFIG, open('config.json', 'w'))
