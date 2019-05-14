@@ -8,6 +8,7 @@ from threading import Timer
 import numpy as np
 import os
 
+
 #
 #
 #   msg: {'REQ_VOTE'}
@@ -51,7 +52,8 @@ class Server:
 
         self.server.bind((self.HOST, self.server_port[self.server_id]['port']))
         self.server.listen(5)
-        self.log = []
+        log = {'Content': '', 'term': self.0}
+        self.log = [log]
 
         self.listener = socket(AF_INET, SOCK_DGRAM)
         self.listener.bind((self.HOST, self.server_port[self.server_id]['server_port']))
@@ -62,7 +64,7 @@ class Server:
         self.loggedIndices = {}
 
         self.current_term = 0
-        self.timeout = 3
+        self.timeout = 5
         self.heartbeat_timeout = 1
         self.role = 'follower'
         self.election_timeout = random.uniform(self.timeout, 2 * self.timeout)
@@ -173,6 +175,7 @@ class Server:
 
         self.CommitIndex = len(self.log) - 1
         self.LastApplied = len(self.log) - 1
+        del msg['Command']
         self.log.append(msg)
         self.sendHeartbeat()
 
@@ -285,10 +288,18 @@ class Server:
         #                          if center_id != self.datacenter_id])
         print('send heartbeat')
 
+        CONFIG = json.load(open("config.json"))
+        server_on_list = CONFIG['server_on']
+
+        self.nextIndices = dict([(server_id, self.log[-1].index + 1)
+                                 for server_id in server_on_list
+                                 if server_id != self.server_id])
+
         self.sendHeartbeat()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
         self.heartbeat_timer.daemon = True
         self.heartbeat_timer.start()
+
 
     def sendHeartbeat(self):
         """
@@ -329,7 +340,6 @@ class Server:
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex}
         self.sendMessage(target_id, msg)
-
 
     def sendAppendEntry(self, server_id):
         """
@@ -457,8 +467,6 @@ class Server:
         # peer_socket.connect(addr)
         # self.all_socket[port].send(message)
 
-
-
     def accept_incoming_connections(self):
         """Sets up handling for incoming clients."""
         while True:
@@ -498,7 +506,11 @@ class Server:
             self.sendMessage(self.leader_id, msg)
         else:
             # TODO
+            del msg['Command']
             self.log.append(msg)
+            self.CommitIndex+=1
+            self.LastApplied+=1
+            self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.
         """Handles a single client connection."""
@@ -549,7 +561,6 @@ class Server:
 
 
 if __name__ == "__main__":
-
 
     try:
         server = Server()
