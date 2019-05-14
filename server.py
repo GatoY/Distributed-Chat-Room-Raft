@@ -127,7 +127,6 @@ class Server:
         self.leader_id = None
         self.resetElectionTimeout()
         self.current_term += 1
-        self.votes = [self.server_id]
         # self.voted_for = self.server_id
         self.vote_log[self.current_term] = [self.server_id]
 
@@ -244,8 +243,8 @@ class Server:
         vote_granted = msg['Decision']
 
         if vote_granted:
-            self.votes.append(follower_id)
-            print('get another vote in term {}, votes got: {}'.format(self.current_term, self.votes))
+            self.vote_log[self.current_term].append(follower_id)
+            print('get another vote in term {}, votes got: {}'.format(self.current_term, self.vote_log[self.current_term]))
             if not self.isLeader() and self.enoughForLeader():
                 self.becomeLeader()
         else:
@@ -424,8 +423,8 @@ class Server:
         """
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
-        print('enough for leader? %s > %s' % (np.unique(np.array(self.votes)).shape[0], len(server_on_list) / 2))
-        return np.unique(np.array(self.votes)).shape[0] > len(server_on_list) / 2
+        print('enough for leader? %s > %s' % (np.unique(np.array(self.vote_log[self.current_term])).shape[0], len(server_on_list) / 2))
+        return np.unique(np.array(self.vote_log[self.current_term])).shape[0] > len(server_on_list) / 2
 
     def isLeader(self):
         """

@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="89285163-0f58-495e-995c-79423fe55eb0" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/config.json" afterPath="$PROJECT_DIR$/config.json" />
       <change beforePath="$PROJECT_DIR$/server.py" afterPath="$PROJECT_DIR$/server.py" />
     </list>
@@ -48,8 +47,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="286">
-              <caret line="268" column="21" lean-forward="false" selection-start-line="268" selection-start-column="8" selection-end-line="268" selection-end-column="21" />
+            <state relative-caret-position="182">
+              <caret line="129" column="37" lean-forward="false" selection-start-line="129" selection-start-column="37" selection-end-line="129" selection-end-column="37" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -72,8 +71,8 @@
       <file leaf-file-name="config.json" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/config.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="262" lean-forward="false" selection-start-line="0" selection-start-column="262" selection-end-line="0" selection-end-column="262" />
+            <state relative-caret-position="240">
+              <caret line="16" column="26" lean-forward="true" selection-start-line="16" selection-start-column="26" selection-end-line="16" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -112,7 +111,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>AppendEntrie</find>
       <find>AppendEntr</find>
       <find>stepDown</find>
       <find>Command</find>
@@ -142,6 +140,7 @@
       <find>election_log</find>
       <find>leader_id</find>
       <find>self.vote_log</find>
+      <find>self.votes</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -165,8 +164,8 @@
         <option value="$PROJECT_DIR$/state_ini.py" />
         <option value="$PROJECT_DIR$/test2.py" />
         <option value="$PROJECT_DIR$/test.py" />
-        <option value="$PROJECT_DIR$/config.json" />
         <option value="$PROJECT_DIR$/raft_raw_update/state_ini.py" />
+        <option value="$PROJECT_DIR$/config.json" />
         <option value="$PROJECT_DIR$/server.py" />
       </list>
     </option>
@@ -452,28 +451,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/state_ini.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="0" lean-forward="true" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/raft_raw_update/server.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="182">
           <caret line="88" column="0" lean-forward="false" selection-start-line="88" selection-start-column="0" selection-end-line="101" selection-end-column="54" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="262" lean-forward="false" selection-start-line="0" selection-start-column="262" selection-end-line="0" selection-end-column="262" />
           <folding />
         </state>
       </provider>
@@ -510,10 +491,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/state_ini.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="9" column="0" lean-forward="true" selection-start-line="9" selection-start-column="0" selection-end-line="9" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#11#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="16" column="26" lean-forward="true" selection-start-line="16" selection-start-column="26" selection-end-line="16" selection-end-column="26" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="286">
-          <caret line="268" column="21" lean-forward="false" selection-start-line="268" selection-start-column="8" selection-end-line="268" selection-end-column="21" />
+        <state relative-caret-position="182">
+          <caret line="129" column="37" lean-forward="false" selection-start-line="129" selection-start-column="37" selection-end-line="129" selection-end-column="37" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>
