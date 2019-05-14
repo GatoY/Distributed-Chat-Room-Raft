@@ -135,7 +135,7 @@ class Server:
             self.handelClientRequest(msg)
         elif msg_type == 'AppendEntry':
             self.CommitEntry(msg)
-        elif msg_type == 'APPEND_REPLY':
+        elif msg_type == 'AppendEntryConfirm':
             self.handleAppendEntryReply(msg)
 
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
@@ -365,6 +365,8 @@ class Server:
         self.commit_idx = max(self.commit_idx, majority_idx)
         #TODO
         list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
+
+        self.broadcast_client(msg['Entries'])
 
 
     def maxQualifiedIndex(self, indices):
