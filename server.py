@@ -45,12 +45,12 @@ class Server:
 
         self.server = socket(AF_INET, SOCK_STREAM)
 
-        self.server.bind((self.HOST, self.server_port[server_id]['port']))
+        self.server.bind((self.HOST, self.server_port[self.server_id]['port']))
         self.server.listen(5)
         self.log = []
 
         self.listener = socket(AF_INET, SOCK_DGRAM)
-        self.listener.bind((self.HOST, self.server_port[server_id]['server_port']))
+        self.listener.bind((self.HOST, self.server_port[self.server_id]['server_port']))
 
         self.CommitIndex = 0
         self.LastApplied = 0
