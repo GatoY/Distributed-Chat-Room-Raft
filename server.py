@@ -6,7 +6,7 @@ import json
 import random
 from threading import Timer
 import numpy as np
-
+import os
 
 #
 #
@@ -550,5 +550,11 @@ class Server:
 
 if __name__ == "__main__":
 
-    server = Server()
-    server.start()
+
+    try:
+        server = Server()
+        server.start()
+
+    except KeyboardInterrupt:
+        # print('KeyboardInterrupt')
+        os.system('python3 state_ini.py 5')
