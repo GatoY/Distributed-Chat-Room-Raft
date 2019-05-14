@@ -34,10 +34,7 @@ class Server:
             if i not in server_on_list:
                 self.server_id = i
                 break
-        if 'server_on' in CONFIG:
-            CONFIG['server_on'].append(server_id)
-        else:
-            CONFIG['server_on'] = [server_id]
+        CONFIG['server_on'].append(server_id)
         json.dump(CONFIG, open('config.json', 'w'))
 
         self.server_port = CONFIG['server_port']
