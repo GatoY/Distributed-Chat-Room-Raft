@@ -343,6 +343,8 @@ class Server:
         # print(msg['LeaderId'])
         # print('send commit entry')
         self.leader_id = msg['LeaderId']
+        term = msg['current_term']
+        self.current_term = term if self.current_term<term else self.current_term
         self.resetElectionTimeout()
         msg['server_id'] = self.server_id
         msg['Command'] = 'AppendEntryConfirm'
