@@ -45,11 +45,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="server.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="321">
-              <caret line="340" column="48" lean-forward="false" selection-start-line="340" selection-start-column="48" selection-end-line="340" selection-end-column="48" />
+            <state relative-caret-position="254">
+              <caret line="281" column="44" lean-forward="true" selection-start-line="281" selection-start-column="44" selection-end-line="281" selection-end-column="44" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -69,11 +69,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="config.json" pinned="false" current-in-tab="false">
+      <file leaf-file-name="config.json" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/config.json">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="122" lean-forward="false" selection-start-line="0" selection-start-column="122" selection-end-line="0" selection-end-column="122" />
+            <state relative-caret-position="180">
+              <caret line="12" column="26" lean-forward="true" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -102,13 +102,10 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>commit_idx</find>
-      <find>self.voted_for</find>
       <find>voted_for</find>
       <find>clientRequestReply</find>
       <find>loggedIndices</find>
       <find>commitEntry</find>
-      <find>self.loggedIndices</find>
       <find>num_nodes</find>
       <find>server_id</find>
       <find>election_timer</find>
@@ -132,6 +129,9 @@
       <find>self.clients</find>
       <find>AppendEntry</find>
       <find>self.nextIndices</find>
+      <find>self.loggedIndices</find>
+      <find>self.commit_idx</find>
+      <find>ClientRequest</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -156,8 +156,8 @@
         <option value="$PROJECT_DIR$/test2.py" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/raft_raw_update/state_ini.py" />
-        <option value="$PROJECT_DIR$/config.json" />
         <option value="$PROJECT_DIR$/server.py" />
+        <option value="$PROJECT_DIR$/config.json" />
       </list>
     </option>
   </component>
@@ -194,11 +194,6 @@
             <path>
               <item name="Distributed-Chat-Room-Raft" type="b2602c69:ProjectViewProjectNode" />
               <item name="Distributed-Chat-Room-Raft" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="Distributed-Chat-Room-Raft" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Distributed-Chat-Room-Raft" type="462c0819:PsiDirectoryNode" />
-              <item name="raft_raw_update" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -492,21 +487,21 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/config.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="122" lean-forward="false" selection-start-line="0" selection-start-column="122" selection-end-line="0" selection-end-column="122" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="321">
-          <caret line="340" column="48" lean-forward="false" selection-start-line="340" selection-start-column="48" selection-end-line="340" selection-end-column="48" />
+        <state relative-caret-position="254">
+          <caret line="281" column="44" lean-forward="true" selection-start-line="281" selection-start-column="44" selection-end-line="281" selection-end-column="44" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/config.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="12" column="26" lean-forward="true" selection-start-line="12" selection-start-column="26" selection-end-line="12" selection-end-column="26" />
+          <folding />
         </state>
       </provider>
     </entry>

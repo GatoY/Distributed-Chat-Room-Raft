@@ -158,10 +158,10 @@ class Server:
         # self.log.append(msg['Entries'])
         # msg = {'Command': 'ClientRequest', 'Content': content, 'term'}
 
-        self.CommitIndex = len(self.log) - 1
-        self.LastApplied = len(self.log) - 1
         del msg['Command']
         self.log.append(msg)
+        self.CommitIndex+=1
+        self.LastApplied+=1
         self.sendHeartbeat()
 
     # def clientRequestReply(self, msg, answer):
@@ -313,7 +313,6 @@ class Server:
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
         # print('send entry heartbeat %s' % entries)
-        print(msg)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -332,7 +331,7 @@ class Server:
         # print('send commit entry')
         self.leader_id = msg['LeaderId']
         self.resetElectionTimeout()
-
+        msg['server_id'] = self.server_id
         msg['Command'] = 'AppendEntryConfirm'
         if msg['Entries'] in self.log:
             msg['Confirm'] = 'AlreadyGot'
@@ -503,6 +502,11 @@ class Server:
             self.CommitIndex += 1
             self.LastApplied += 1
 
+            CONFIG = json.load(open("config.json"))
+            server_on_list = CONFIG['server_on']
+            if len(server_on_list) == 1:
+                self.broadcast_client(msg)
+
             self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.
@@ -526,12 +530,12 @@ class Server:
                 self.rec_client(name + ': ' + msg)
 
             else:
-                client.send(bytes("{quit}", "utf8"))
+                # client.send(bytes("{quit}", "utf8"))
                 client.close()
                 self.clients_con.remove(client)
                 # self.broadcast("%s has left the chat." % name)
                 msg = "%s has left the chat." % name
-                client.send(bytes("", "utf8") + msg)
+                # client.send(bytes("", "utf8") + msg)
                 self.rec_client(msg)
                 break
 
