@@ -164,7 +164,7 @@ class Server:
         print('handle client request')
         self.CommitIndex += 1
         self.LastApplied += 1
-        self.broadcast_client(msg['Entries']['Content'])
+        self.broadcast_client(msg['Content'])
         self.sendHeartbeat()
 
     # def clientRequestReply(self, msg, answer):
