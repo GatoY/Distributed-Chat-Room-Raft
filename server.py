@@ -321,7 +321,10 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        prevEntry = self.log[self.nextIndices[server_id] - 1]
+        if self.nextIndices[server_id] - 1>=0:
+            prevEntry = self.log[self.nextIndices[server_id] - 1]
+        else:
+            prevEntry = self.log[0]
         # print(self.nextIndices)
         # print(self.CommitIndex)
         # print(prevEntry)
@@ -361,8 +364,9 @@ class Server:
         follower_id = msg['server_id']
         follower_term = msg['current_term']
         success = msg['Confirm']
-        follower_last_index = msg['PrevLogIndex']
-
+        # if success=='AlreadyGot':
+        #     follower_last_index = msg['PrevLogIndex']
+        # else:
         if follower_term > self.current_term:
             self.current_term = follower_term
             self.stepDown()
@@ -372,14 +376,14 @@ class Server:
         if not self.isLeader(): return
         # if the leader is still in it's term
         # adjust nextIndices for follower
+        # print(msg)
+        # print(self.nextIndices[follower_id])
+        # print(follower_last_index)
+        # print(self.CommitIndex)
 
-        print(self.nextIndices[follower_id])
-        print(follower_last_index)
-        print(self.CommitIndex)
-
-        if self.nextIndices[follower_id] != follower_last_index + 1 and follower_last_index < self.CommitIndex:
-            self.nextIndices[follower_id] = follower_last_index + 1
-            print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
+        if self.nextIndices[follower_id] != self.CommitIndex:
+            self.nextIndices[follower_id] += 1
+            print('update nextIndex of {} to {}'.format(follower_id, self.nextIndices[follower_id]))
 
         if success == 'AlreadyGot':
             # self.sendAppendEntry(follower_id)
@@ -391,7 +395,7 @@ class Server:
         print('the index logged by majority is {0}'.format(majority_idx))
         # commit entries only when at least one entry in current term
         # has reached majority
-        if self.log[majority_idx].term != self.current_term:
+        if self.log[majority_idx]['term'] != self.current_term:
             print('term no right')
             return
         # if we have something to commit
