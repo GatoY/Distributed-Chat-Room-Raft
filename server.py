@@ -60,7 +60,7 @@ class Server:
         self.election_timeout = random.uniform(self.timeout, 1.2 * self.timeout)
 
         # become candidate after timeout
-
+        self.votes = {}
         self.vote_log = {}
         self.heartbeat_timer = None
 
@@ -116,6 +116,7 @@ class Server:
         self.resetElectionTimeout()
         self.current_term += 1
         # self.voted_for = self.server_id
+        self.votes[self.current_term] = self.server_id
         self.vote_log[self.current_term] = [self.server_id]
 
         # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
@@ -172,10 +173,10 @@ class Server:
     #     # self.sendMessage(msg['server_id'], )
     #     pass
 
-    # new_add
+    #TODO add self.log
     def requestVote(self):
         # broadcast the request Vote message to all other datacenters
-        message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term}
+        message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term, 'log_len': len(self.log)}
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
         server_on_list = CONFIG['server_on']
@@ -204,6 +205,7 @@ class Server:
 
         self.current_term = max(candidate_term, self.current_term)
         grant_vote = False
+
         if candidate_id not in self.vote_log:
             self.stepDown()
             self.role = 'follower'
@@ -214,7 +216,11 @@ class Server:
 
             print('voted for DC-{} in term {}'.format(candidate_id, self.current_term))
             grant_vote = True
-
+        if msg['log_len'] < len(self.log):
+            grant_vote = False
+        if candidate_term in self.votes:
+            if self.votes[candidate_term]!=candidate_id:
+                grant_vote = False
         self.requestVoteReply(candidate_id, grant_vote)
 
     def handleRequestVoteReply(self, msg):
