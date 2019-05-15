@@ -160,6 +160,7 @@ class Server:
 
         del msg['Command']
         self.log.append(msg)
+        print('handle client request')
         self.CommitIndex += 1
         self.LastApplied += 1
         self.sendHeartbeat()
@@ -321,6 +322,9 @@ class Server:
         :type center_id: str
         """
         prevEntry = self.log[self.nextIndices[server_id] - 1]
+        # print(self.nextIndices)
+        # print(self.CommitIndex)
+        # print(prevEntry)
         self.appendEntry(server_id, prevEntry['index'], prevEntry['term'], self.log[self.nextIndices[server_id]])
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
@@ -337,6 +341,7 @@ class Server:
             msg['Confirm'] = 'AlreadyGot'
             self.sendMessage(self.leader_id, msg)
             return
+        print('append %s' % msg['Entries'])
         msg['Confirm'] = 'Success'
         self.sendMessage(self.leader_id, msg)
         self.log.append(msg['Entries'])
@@ -356,7 +361,7 @@ class Server:
         follower_id = msg['server_id']
         follower_term = msg['current_term']
         success = msg['Confirm']
-        follower_last_index = msg['PrevLogIndex'] + 1
+        follower_last_index = msg['PrevLogIndex']
 
         if follower_term > self.current_term:
             self.current_term = follower_term
@@ -367,12 +372,18 @@ class Server:
         if not self.isLeader(): return
         # if the leader is still in it's term
         # adjust nextIndices for follower
+
+        print(self.nextIndices[follower_id])
+        print(follower_last_index)
+        print(self.CommitIndex)
+
         if self.nextIndices[follower_id] != follower_last_index + 1 and follower_last_index < self.CommitIndex:
             self.nextIndices[follower_id] = follower_last_index + 1
             print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
+
         if success == 'AlreadyGot':
             # self.sendAppendEntry(follower_id)
-            print('already got that entry')
+            # print('already got that entry')
             return
 
         # find out the index most followers have reached
@@ -406,7 +417,7 @@ class Server:
         # maxOld = sorted([indices[x] for x in entry['data'][0]])[int((len(entry['data'][0])-1)/2)]
         # maxNew = sorted([indices[x] for x in entry['data'][1]])[int((len(entry['data'][1])-1)/2)]
 
-        return min(indices.values)
+        return min(indices.values())
 
     def enoughForLeader(self):
         """
@@ -548,7 +559,7 @@ class Server:
 
     def broadcast_client(self, msg, prefix=""):
         for sock in self.clients_con:
-            sock.send(bytes(prefix+msg, "utf8"))
+            sock.send(bytes(prefix + msg, "utf8"))
 
 
 if __name__ == "__main__":
