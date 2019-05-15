@@ -1,4 +1,5 @@
-"""Server for multithreaded (asynchronous) chat application."""
+"""Server for multithreaded (asynchronous) chat application in distributed server supported by Raft Algorithm."""
+
 from socket import *
 from threading import Thread
 import sys
@@ -14,18 +15,19 @@ import time
 #
 #   msg: {'REQ_VOTE'}
 #        {'REQ_VOTE_REPLY'}
-#        {'LOG'}
-#        {'HEART_BEAT'}
+#        {'ClientRequest'}
+#        {'AppendEntry'}
+#        {'AppendEntryConfirm'}
 #   Log status:         # Uncommit Commited Applied
 #
-#   AppendEntries RPC: HeartBeat, InfoSyn
+#   AppendEntries RPC: HeartBeat
 #   # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit
 #
 #   RPC Reply: CurrentTerm, Success
 #
 #
 #
-#
+
 class Server:
     def __init__(self, server_id, CONFIG):
 
@@ -64,22 +66,17 @@ class Server:
         self.vote_log = {}
         self.heartbeat_timer = None
 
-        # if self.role != 'leader':
-        print(self.election_timeout)
+        print('Election Timeout is: %ss' % self.election_timeout)
 
         self.election_timer = Timer(self.election_timeout, self.start_election)
         self.election_timer.daemon = True
         self.election_timer.start()
-        # else:
-        #      self.election_timer = None
 
         Thread(target=self.start())
-        # self.sendMessage('2', {'1':1})
         Thread(target=self.rec_msg())
-
         print('server running at ip: %s, port: %s' % (self.HOST, self.PORT))
 
-    # new_add
+    # handleIncommingMessage
     def handleIncommingMessage(self, msg):
         # handle incomming messages
         # Message types:
@@ -91,10 +88,13 @@ class Server:
         # 2. requestVoteReply RPC
         elif msg_type == 'REQ_VOTE_REPLY':
             self.handleRequestVoteReply(msg)
+        # 3. deal with clients
         elif msg_type == 'ClientRequest':
             self.handelClientRequest(msg)
+        # 4. append entry
         elif msg_type == 'AppendEntry':
             self.CommitEntry(msg)
+        # 5. Confirm append entry
         elif msg_type == 'AppendEntryConfirm':
             self.handleAppendEntryReply(msg)
 
@@ -102,10 +102,8 @@ class Server:
         print("Waiting for connection...")
         self.new_thread = Thread(target=self.accept_incoming_connections)
         self.new_thread.start()
-        # self.new_thread.join()
-        # self.server.close()
 
-    # new_add
+    # start election
     def start_election(self):
         """
                 start the election process
@@ -115,13 +113,10 @@ class Server:
         self.leader_id = None
         self.resetElectionTimeout()
         self.current_term += 1
-        # self.voted_for = self.server_id
         self.votes[self.current_term] = self.server_id
         self.vote_log[self.current_term] = [self.server_id]
 
-        # dictobj = {'current_term': self.current_term, 'voted_for': self.voted_for}
         print('become candidate for term {}'.format(self.current_term))
-
         # handle the case where only one server is left
         if not self.isLeader() and self.enoughForLeader():
             self.becomeLeader()
@@ -173,10 +168,11 @@ class Server:
     #     # self.sendMessage(msg['server_id'], )
     #     pass
 
-    #TODO add self.log
+    # TODO add self.log
     def requestVote(self):
         # broadcast the request Vote message to all other datacenters
-        message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term, 'log_len': len(self.log)}
+        message = {'Command': 'REQ_VOTE', 'ServerId': self.server_id, 'current_term': self.current_term,
+                   'log_len': len(self.log)}
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
         server_on_list = CONFIG['server_on']
@@ -219,7 +215,7 @@ class Server:
         if msg['log_len'] < len(self.log):
             grant_vote = False
         if candidate_term in self.votes:
-            if self.votes[candidate_term]!=candidate_id:
+            if self.votes[candidate_term] != candidate_id:
                 grant_vote = False
         self.requestVoteReply(candidate_id, grant_vote)
 
@@ -350,7 +346,7 @@ class Server:
         # print('send commit entry')
         self.leader_id = msg['LeaderId']
         term = msg['current_term']
-        self.current_term = term if self.current_term<term else self.current_term
+        self.current_term = term if self.current_term < term else self.current_term
         self.resetElectionTimeout()
         msg['server_id'] = self.server_id
         msg['Command'] = 'AppendEntryConfirm'
