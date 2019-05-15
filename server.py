@@ -313,6 +313,7 @@ class Server:
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
         # print('send entry heartbeat %s' % entries)
+        print(msg)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -328,15 +329,20 @@ class Server:
     def CommitEntry(self, msg):
         # print(msg)
         # print(msg['LeaderId'])
+        # print('send commit entry')
+        self.leader_id = msg['LeaderId']
         self.resetElectionTimeout()
+
+        msg['Command'] = 'AppendEntryConfirm'
         if msg['Entries'] in self.log:
+            msg['Confirm'] = 'AlreadyGot'
+            self.sendMessage(self.leader_id, msg)
             return
+        msg['Confirm'] = 'Success'
+        self.sendMessage(self.leader_id, msg)
         self.log.append(msg['Entries'])
         self.broadcast_client(msg['Entries']['Content'])
-        msg['Command'] = 'AppendEntryConfirm'
-        msg['Confirm'] = 'True'
-        self.leader_id = msg['LeaderId']
-        self.sendMessage(self.leader_id, msg)
+
 
     # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
@@ -363,19 +369,16 @@ class Server:
         if not self.isLeader(): return
         # if the leader is still in it's term
         # adjust nextIndices for follower
-        if self.nextIndices[follower_id] != follower_last_index + 1:
+        if self.nextIndices[follower_id] != follower_last_index + 1 and follower_last_index<self.CommitIndex:
             self.nextIndices[follower_id] = follower_last_index + 1
             print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
-        if not success:
-            self.sendAppendEntry(follower_id)
-            print('append no success')
+        if success == 'AlreadyGot':
+            # self.sendAppendEntry(follower_id)
+            print('already got that entry')
             return
-        # check if there is any log entry committed
-        # to do that, we need to keep tabs on the successfully
-        # committed entries
-        self.loggedIndices[follower_id] = follower_last_index
+
         # find out the index most followers have reached
-        majority_idx = self.maxQualifiedIndex(self.loggedIndices)
+        majority_idx = self.maxQualifiedIndex(self.nextIndices)
         print('the index logged by majority is {0}'.format(majority_idx))
         # commit entries only when at least one entry in current term
         # has reached majority
@@ -383,12 +386,12 @@ class Server:
             print('term no right')
             return
         # if we have something to commit
-        # if majority_idx < self.commit_idx, do nothing
-        old_commit_idx = self.commit_idx
-        self.commit_idx = max(self.commit_idx, majority_idx)
+        # if majority_idx < self.CommitIndex, do nothing
+        # old_commit_idx = self.CommitIndex
+        # self.CommitIndex = max(self.CommitIndex, majority_idx)
         # TODO
-        list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
-        self.roadcast_client(msg['Entries']['Content'])
+        # list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
+        self.broadcast_client(msg['Entries']['Content'])
 
 
     def maxQualifiedIndex(self, indices):
@@ -447,6 +450,7 @@ class Server:
         peer_socket = socket(AF_INET, SOCK_DGRAM)
         # print('server_id %s' % server_id)
         # print('leader_id %s' % self.leader_id)
+        #########
         port = self.server_port[server_id]['server_port']
         addr = (self.HOST, port)
         peer_socket.sendto(message.encode(), addr)
@@ -492,10 +496,13 @@ class Server:
             print(' Transfer to leader')
             self.sendMessage(self.leader_id, msg)
         else:
+            print('log record client')
             del msg['Command']
             self.log.append(msg)
+            print(self.log)
             self.CommitIndex += 1
             self.LastApplied += 1
+
             self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.

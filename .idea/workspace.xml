@@ -48,8 +48,8 @@
       <file leaf-file-name="server.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="182">
-              <caret line="335" column="56" lean-forward="true" selection-start-line="335" selection-start-column="56" selection-end-line="335" selection-end-column="56" />
+            <state relative-caret-position="321">
+              <caret line="340" column="48" lean-forward="false" selection-start-line="340" selection-start-column="48" selection-end-line="340" selection-end-column="48" />
               <folding>
                 <element signature="e#64#84#0" expanded="true" />
               </folding>
@@ -73,7 +73,7 @@
         <entry file="file://$PROJECT_DIR$/config.json">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="0">
-              <caret line="0" column="262" lean-forward="false" selection-start-line="0" selection-start-column="262" selection-end-line="0" selection-end-column="262" />
+              <caret line="0" column="122" lean-forward="false" selection-start-line="0" selection-start-column="122" selection-end-line="0" selection-end-column="122" />
               <folding />
             </state>
           </provider>
@@ -102,10 +102,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>Command</find>
-      <find>follower_id</find>
-      <find>handleAppendEntryReply</find>
-      <find>commit</find>
       <find>commit_idx</find>
       <find>self.voted_for</find>
       <find>voted_for</find>
@@ -130,8 +126,12 @@
       <find>leader_id</find>
       <find>appendEntry</find>
       <find>self.server_port</find>
-      <find>self.nextIndices</find>
       <find>roadcast_client</find>
+      <find>clients</find>
+      <find>clients_con</find>
+      <find>self.clients</find>
+      <find>AppendEntry</find>
+      <find>self.nextIndices</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -156,8 +156,8 @@
         <option value="$PROJECT_DIR$/test2.py" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/raft_raw_update/state_ini.py" />
-        <option value="$PROJECT_DIR$/server.py" />
         <option value="$PROJECT_DIR$/config.json" />
+        <option value="$PROJECT_DIR$/server.py" />
       </list>
     </option>
   </component>
@@ -495,15 +495,15 @@
     <entry file="file://$PROJECT_DIR$/config.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
-          <caret line="0" column="262" lean-forward="false" selection-start-line="0" selection-start-column="262" selection-end-line="0" selection-end-column="262" />
+          <caret line="0" column="122" lean-forward="false" selection-start-line="0" selection-start-column="122" selection-end-line="0" selection-end-column="122" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/server.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="182">
-          <caret line="335" column="56" lean-forward="true" selection-start-line="335" selection-start-column="56" selection-end-line="335" selection-end-column="56" />
+        <state relative-caret-position="321">
+          <caret line="340" column="48" lean-forward="false" selection-start-line="340" selection-start-column="48" selection-end-line="340" selection-end-column="48" />
           <folding>
             <element signature="e#64#84#0" expanded="true" />
           </folding>
