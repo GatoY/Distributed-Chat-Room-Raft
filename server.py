@@ -31,9 +31,7 @@ class Server:
         self.server_id = server_id
         self.leader_id = None
         json.dump(CONFIG, open('config.json', 'w'))
-
         self.server_port = CONFIG['server_port']
-        self.clients = {}
         self.clients_con = []
         self.addresses = {}
         self.HOST = ''
@@ -42,7 +40,7 @@ class Server:
         self.server = socket(AF_INET, SOCK_STREAM)
 
         self.server.bind((self.HOST, self.server_port[self.server_id]['port']))
-        self.server.listen(5)
+        self.server.listen(8)
         log = {'Content': '', 'term': 0, 'index': 0}
         self.log = [log]
 
@@ -137,11 +135,10 @@ class Server:
         if self.election_timer:
             self.election_timer.cancel()
         # need to restart election if the election failed
-        print('reset ElectionTimeout')
+        # print('reset ElectionTimeout')
         self.election_timer = Timer(self.election_timeout, self.start_election)
         self.election_timer.daemon = True
         self.election_timer.start()
-        print('reset election count down')
 
     def rec_msg(self):
         print('rec msg')
@@ -315,7 +312,7 @@ class Server:
         msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
-        print('send entry heartbeat %s' % entries)
+        # print('send entry heartbeat %s' % entries)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -329,10 +326,13 @@ class Server:
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
     def CommitEntry(self, msg):
+        # print(msg)
+        # print(msg['LeaderId'])
         self.resetElectionTimeout()
         if msg['Entries'] in self.log:
             return
         self.log.append(msg['Entries'])
+        self.broadcast_client(msg['Entries']['Content'])
         msg['Command'] = 'AppendEntryConfirm'
         msg['Confirm'] = 'True'
         self.leader_id = msg['LeaderId']
@@ -358,6 +358,7 @@ class Server:
             self.current_term = follower_term
             self.stepDown()
             return
+
         # if I am no longer the leader, ignore the message
         if not self.isLeader(): return
         # if the leader is still in it's term
@@ -367,6 +368,7 @@ class Server:
             print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
         if not success:
             self.sendAppendEntry(follower_id)
+            print('append no success')
             return
         # check if there is any log entry committed
         # to do that, we need to keep tabs on the successfully
@@ -378,6 +380,7 @@ class Server:
         # commit entries only when at least one entry in current term
         # has reached majority
         if self.log[majority_idx].term != self.current_term:
+            print('term no right')
             return
         # if we have something to commit
         # if majority_idx < self.commit_idx, do nothing
@@ -385,8 +388,8 @@ class Server:
         self.commit_idx = max(self.commit_idx, majority_idx)
         # TODO
         list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
+        self.roadcast_client(msg['Entries']['Content'])
 
-        self.broadcast_client(msg['Entries'])
 
     def maxQualifiedIndex(self, indices):
         """
@@ -442,6 +445,8 @@ class Server:
         """
         message = json.dumps(message)
         peer_socket = socket(AF_INET, SOCK_DGRAM)
+        # print('server_id %s' % server_id)
+        # print('leader_id %s' % self.leader_id)
         port = self.server_port[server_id]['server_port']
         addr = (self.HOST, port)
         peer_socket.sendto(message.encode(), addr)
@@ -505,8 +510,6 @@ class Server:
 
         # self.broadcast(msg, name)
         # self.broadcast_client(msg)
-        self.clients[client] = name
-
         while True:
             msg = client.recv(self.BUFSIZ)
             if msg != bytes("{quit}", "utf8"):
@@ -518,8 +521,7 @@ class Server:
             else:
                 client.send(bytes("{quit}", "utf8"))
                 client.close()
-                del self.clients[client]
-                del self.clients_con[client]
+                self.clients_con.remove(client)
                 # self.broadcast("%s has left the chat." % name)
                 msg = "%s has left the chat." % name
                 client.send(bytes("", "utf8") + msg)
@@ -537,7 +539,7 @@ class Server:
                 self.sendMessage(server_id, message)
 
     def broadcast_client(self, msg, prefix=""):
-        for sock in self.clients:
+        for sock in self.clients_con:
             sock.send(bytes(prefix, "utf8") + msg)
 
 
