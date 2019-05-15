@@ -7,6 +7,7 @@ import random
 from threading import Timer
 import numpy as np
 import os
+import time
 
 
 #
@@ -163,6 +164,7 @@ class Server:
         print('handle client request')
         self.CommitIndex += 1
         self.LastApplied += 1
+        self.broadcast_client(msg['Entries']['Content'])
         self.sendHeartbeat()
 
     # def clientRequestReply(self, msg, answer):
@@ -290,8 +292,12 @@ class Server:
         CONFIG = json.load(open("config.json"))
         self.server_port = CONFIG['server_port']
         server_on_list = CONFIG['server_on']
+
         for server_id in self.server_port:
             if server_id != self.server_id and server_id in server_on_list:
+                if server_id not in self.nextIndices:
+                    self.nextIndices[server_id] = len(self.log) - 1
+
                 self.sendAppendEntry(server_id)
 
         self.resetHeartbeatTimeout()
@@ -321,7 +327,7 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
-        if self.nextIndices[server_id] - 1>=0:
+        if self.nextIndices[server_id] - 1 >= 0:
             prevEntry = self.log[self.nextIndices[server_id] - 1]
         else:
             prevEntry = self.log[0]
@@ -404,7 +410,6 @@ class Server:
         # self.CommitIndex = max(self.CommitIndex, majority_idx)
         # TODO
         # list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
-        self.broadcast_client(msg['Entries']['Content'])
 
     def maxQualifiedIndex(self, indices):
         """
@@ -514,11 +519,7 @@ class Server:
             print(self.log)
             self.CommitIndex += 1
             self.LastApplied += 1
-
-            CONFIG = json.load(open("config.json"))
-            server_on_list = CONFIG['server_on']
-            if len(server_on_list) == 1:
-                self.broadcast_client(content)
+            self.broadcast_client(content)
             self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.
@@ -528,6 +529,9 @@ class Server:
         welcome = 'Welcome %s! If you want to quit, type {quit} to exit.' % name
         client.send(bytes(welcome, "utf8"))
         msg = "%s has joined the chat!" % name
+        for log in self.log:
+            time.sleep(0.1)
+            client.send(bytes(log['Content'], 'utf8'))
 
         self.rec_client(msg)
 
