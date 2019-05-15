@@ -160,8 +160,8 @@ class Server:
 
         del msg['Command']
         self.log.append(msg)
-        self.CommitIndex+=1
-        self.LastApplied+=1
+        self.CommitIndex += 1
+        self.LastApplied += 1
         self.sendHeartbeat()
 
     # def clientRequestReply(self, msg, answer):
@@ -266,7 +266,7 @@ class Server:
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
         # initialize a record of nextIdx
-        self.nextIndices = dict([(server_id, len(self.log)-1)
+        self.nextIndices = dict([(server_id, len(self.log) - 1)
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
         print('send heartbeat')
@@ -342,7 +342,6 @@ class Server:
         self.log.append(msg['Entries'])
         self.broadcast_client(msg['Entries']['Content'])
 
-
     # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
     def handleAppendEntryReply(self, msg):
@@ -368,7 +367,7 @@ class Server:
         if not self.isLeader(): return
         # if the leader is still in it's term
         # adjust nextIndices for follower
-        if self.nextIndices[follower_id] != follower_last_index + 1 and follower_last_index<self.CommitIndex:
+        if self.nextIndices[follower_id] != follower_last_index + 1 and follower_last_index < self.CommitIndex:
             self.nextIndices[follower_id] = follower_last_index + 1
             print('update nextIndex of {} to {}'.format(follower_id, follower_last_index + 1))
         if success == 'AlreadyGot':
@@ -391,7 +390,6 @@ class Server:
         # TODO
         # list(map(self.commitEntry, self.log[old_commit_idx + 1:majority_idx + 1]))
         self.broadcast_client(msg['Entries']['Content'])
-
 
     def maxQualifiedIndex(self, indices):
         """
@@ -419,7 +417,7 @@ class Server:
         CONFIG = json.load(open("config.json"))
         server_on_list = CONFIG['server_on']
         print('enough for leader? %s > %s' % (
-        np.unique(np.array(self.vote_log[self.current_term])).shape[0], len(server_on_list) / 2))
+            np.unique(np.array(self.vote_log[self.current_term])).shape[0], len(server_on_list) / 2))
         return np.unique(np.array(self.vote_log[self.current_term])).shape[0] > len(server_on_list) / 2
 
     def isLeader(self):
@@ -505,8 +503,7 @@ class Server:
             CONFIG = json.load(open("config.json"))
             server_on_list = CONFIG['server_on']
             if len(server_on_list) == 1:
-                self.broadcast_client(msg)
-
+                self.broadcast_client(content)
             self.sendHeartbeat()
 
     def handle_client(self, client):  # Takes client socket as argument.
@@ -551,7 +548,7 @@ class Server:
 
     def broadcast_client(self, msg, prefix=""):
         for sock in self.clients_con:
-            sock.send(bytes(prefix, "utf8") + msg)
+            sock.send(bytes(prefix+msg, "utf8"))
 
 
 if __name__ == "__main__":
@@ -579,6 +576,3 @@ if __name__ == "__main__":
         CONFIG['server_on'].remove(server_id)
         json.dump(CONFIG, open('config.json', 'w'))
         # os.system('python3 state_ini.py 5')
-
-
-
