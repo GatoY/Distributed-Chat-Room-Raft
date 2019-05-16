@@ -271,7 +271,17 @@ class Server:
         do things to be done as a leader
         """
         print('become leader for term {}'.format(self.current_term))
-
+        #self.broadcast_client("SERVERINFO:After election, server %s becomes leader"%self.server_id)
+        text = 'SERVERINFO:After election, server %s becomes leader'%self.server_id
+        msg = {'Content': text, 'term': self.current_term, 'index': len(self.log)}
+        for log in self.log:
+            if log['Content'] == text:
+                msg = {'Content': 'SERVERINFO:After election, new server %s becomes leader'%self.server_id, 'term': self.current_term, 'index': len(self.log)}
+                break
+        self.log.append(msg)
+        self.CommitIndex += 1
+        self.LastApplied += 1
+        self.broadcast_client(msg['Content'])
         # no need to wait for heartbeat anymore
         self.election_timer.cancel()
 
@@ -511,7 +521,7 @@ class Server:
             client, client_address = self.server.accept()
             self.clients_con.append(client)
             print("%s:%s has connected." % client_address)
-            client.send(bytes("Welcome! Type your username and press enter to continue.", "utf8"))
+            client.send(bytes("Welcome! You are at server %s. Type your username and press enter to continue."%self.server_id, "utf8"))
             self.addresses[client] = client_address
             Thread(target=self.handle_client, args=(client,)).start()
 
@@ -603,7 +613,7 @@ class Server:
 if __name__ == "__main__":
     CONFIG = json.load(open("config.json"))
     server_on_list = CONFIG['server_on']
-    all_server_id = CONFIG['server_port'].keys()
+    all_server_id = sorted(CONFIG['server_port'].keys())
     for i in all_server_id:
         if i not in server_on_list:
             server_id = i
