@@ -298,7 +298,7 @@ class Server:
         for server_id in self.server_port:
             if server_id != self.server_id and server_id in server_on_list:
                 if server_id not in self.nextIndices:
-                    self.nextIndices[server_id] = 0
+                    self.nextIndices[server_id] = len(self.log) - 1
 
                 self.sendAppendEntry(server_id)
 
