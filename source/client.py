@@ -35,7 +35,7 @@ class Client():
         self.top.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # ----Now comes the sockets part----
-        HOST = ''
+        HOST = 'localhost'
         self.BUFSIZ = 1024
         ADDR = (HOST, PORT)
 
