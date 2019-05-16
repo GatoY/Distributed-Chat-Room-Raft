@@ -140,9 +140,18 @@ class Server:
     def rec_msg(self):
         print('rec msg')
         while True:
-            msg, address = self.listener.recvfrom(4096)
-            msg = json.loads(msg)
-            self.handleIncommingMessage(msg)
+            try:
+                msg, address = self.listener.recvfrom(4096)
+                msg = json.loads(msg)
+                self.handleIncommingMessage(msg)
+            except KeyboardInterrupt:
+                # print('KeyboardInterrupt')
+                server_id = self.server_id
+                CONFIG = json.load(open("config.json"))
+                CONFIG['server_on'].remove(server_id)
+                json.dump(CONFIG, open('config.json', 'w'))
+                os._exit(0)
+                # os.system('python3 state_ini.py 5')
 
     # CurrentTerm, LeaderId, PrevLogIndex, PrevLogTerm, Entries, LeaderCommit, server_id, Command
     def handelClientRequest(self, msg):
@@ -358,6 +367,7 @@ class Server:
         msg['Confirm'] = 'Success'
         self.sendMessage(self.leader_id, msg)
         self.log.append(msg['Entries'])
+        self.CommitIndex += 1
         self.broadcast_client(msg['Entries']['Content'])
 
     # msg = {'Command': 'Append', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
