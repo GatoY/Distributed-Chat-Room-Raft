@@ -142,7 +142,7 @@ class Server:
         while True:
             try:
                 msg, address = self.listener.recvfrom(4096)
-                msg = json.loads(msg.decode())
+                msg = json.loads(msg)
                 self.handleIncommingMessage(msg)
             except KeyboardInterrupt:
                 # print('KeyboardInterrupt')
