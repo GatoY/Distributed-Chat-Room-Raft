@@ -6,6 +6,12 @@
 
 Distributed Chat room supported by Raft consensus algorithm.
 
+## Environment
+Python 3.6+
+
+
+Test on Win10 and MAC
+
 ## Architecture
 
 * state_ini.py: initiate servers.

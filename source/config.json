@@ -1,1 +1,1 @@
-{"server_port": {"3": {"server_port": 23336, "port": 12348}, "2": {"server_port": 23335, "port": 12347}, "0": {"server_port": 23333, "port": 12345}, "1": {"server_port": 23334, "port": 12346}, "4": {"server_port": 23337, "port": 12349}}, "server_on": ["0", "1"]}
+{"server_port": {"0": {"port": 12345, "server_port": 23333}, "1": {"port": 12346, "server_port": 23334}, "2": {"port": 12347, "server_port": 23335}, "3": {"port": 12348, "server_port": 23336}, "4": {"port": 12349, "server_port": 23337}}, "server_on": []}
