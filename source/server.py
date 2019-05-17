@@ -293,7 +293,7 @@ class Server:
         self.nextIndices = dict([(server_id, len(self.log) - 1)
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
-        print('1nextIndices',self.nextIndices)
+        # print('1nextIndices',self.nextIndices)
         print('send heartbeat')
         self.sendHeartbeat()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
@@ -317,11 +317,11 @@ class Server:
 
         for server_id in self.server_port:
             if server_id != self.server_id and server_id in server_on_list:
-                print("11",server_id)
+                # print("11",server_id)
                 if server_id not in self.nextIndices:
                     self.nextIndices[server_id] = 0
-                print("22", server_id)
-                print('2nextIndices', self.nextIndices)
+                # print("22", server_id)
+                # print('2nextIndices', self.nextIndices)
                 self.sendAppendEntry(server_id)
 
         self.resetHeartbeatTimeout()
@@ -345,7 +345,7 @@ class Server:
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
         # print('send entry heartbeat %s' % entries)
-        print('this the msg',msg)
+        # print('this the msg',msg)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -355,9 +355,9 @@ class Server:
         """
         max_num = len(self.log)
         if self.nextIndices[server_id] - 1 >= 0:
-            print('1serverod',server_id)
-            print("2test",self.nextIndices[server_id])
-            print("3test11",self.log)
+           # print('1serverod',server_id)
+           # print("2test",self.nextIndices[server_id])
+           # print("3test11",self.log)
             prevEntry = self.log[self.nextIndices[server_id] - 1]
 
         else:
@@ -427,7 +427,7 @@ class Server:
         # print(self.CommitIndex)
 
         if self.nextIndices[follower_id] != self.CommitIndex:
-            print('self.commitIndex',self.CommitIndex)
+            #print('self.commitIndex',self.CommitIndex)
             self.nextIndices[follower_id] += 1
             print('update nextIndex of {} to {}'.format(follower_id, self.nextIndices[follower_id]))
 
