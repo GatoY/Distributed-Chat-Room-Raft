@@ -20,10 +20,14 @@ class Client():
 
         self.scrollbar = tkinter.Scrollbar(self.messages_frame)  # To navigate through past messages.
         # Following will contain the messages.
-        self.msg_list = tkinter.Listbox(self.messages_frame, height=15, width=100, yscrollcommand=self.scrollbar.set)
+        self.msg_list = tkinter.Listbox(self.messages_frame, height=15, width=75, yscrollcommand=self.scrollbar.set)
         self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
         self.msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
         self.msg_list.pack()
+        self.msg_list1 = tkinter.Listbox(self.messages_frame, height=15, width=50, yscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        self.msg_list1.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+        self.msg_list1.pack()
         self.messages_frame.pack()
 
         self.entry_field = tkinter.Entry(self.top, textvariable=self.my_msg, width=75)
@@ -35,7 +39,7 @@ class Client():
         self.top.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # ----Now comes the sockets part----
-        HOST = ''
+        HOST = 'localhost'
         self.BUFSIZ = 1024
         ADDR = (HOST, PORT)
 
@@ -51,15 +55,29 @@ class Client():
         while True:
             try:
                 msg = self.client_socket.recv(self.BUFSIZ).decode("utf8")
-                self.msg_list.insert(tkinter.END, msg)
+                if "SERVERINFO" in msg:
+                    if msg.find("SERVERINFO") == 0:
+                        self.msg_list1.insert(tkinter.END, msg)
+                    else:
+                        msg1 = msg[0:msg.find("SERVERINFO")]
+                        msg2 = msg[msg.find("SERVERINFO"):]
+                        self.msg_list.insert(tkinter.END, msg1)
+                        self.msg_list1.insert(tkinter.END, msg2)
+                else:
+                    self.msg_list.insert(tkinter.END, msg)
             except OSError:  # Possibly client has left the chat.
                 break
+
 
     def send(self, event=None):  # event is passed by binders.
         """Handles sending of messages."""
         msg = self.my_msg.get()
         self.my_msg.set("")  # Clears input field.
-        self.client_socket.send(bytes(msg, "utf8"))
+        try:
+            self.client_socket.send(bytes(msg, "utf8"))
+        except:
+            self.client_socket.close()
+            self.top.quit()
         if msg == "{quit}":
             self.client_socket.close()
             self.top.quit()

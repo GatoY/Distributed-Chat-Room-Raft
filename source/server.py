@@ -37,7 +37,7 @@ class Server:
         self.server_port = CONFIG['server_port']
         self.clients_con = []
         self.addresses = {}
-        self.HOST = ''
+        self.HOST = 'localhost'
         self.BUFSIZ = 1024
 
         self.server = socket(AF_INET, SOCK_STREAM)
@@ -271,7 +271,17 @@ class Server:
         do things to be done as a leader
         """
         print('become leader for term {}'.format(self.current_term))
-
+        #self.broadcast_client("SERVERINFO:After election, server %s becomes leader"%self.server_id)
+        text = 'SERVERINFO:After election, server %s becomes leader'%self.server_id
+        msg = {'Content': text, 'term': self.current_term, 'index': len(self.log)}
+        for log in self.log:
+            if log['Content'] == text:
+                msg = {'Content': 'SERVERINFO:After election, new server %s becomes leader'%self.server_id, 'term': self.current_term, 'index': len(self.log)}
+                break
+        self.log.append(msg)
+        self.CommitIndex += 1
+        self.LastApplied += 1
+        self.broadcast_client(msg['Content'])
         # no need to wait for heartbeat anymore
         self.election_timer.cancel()
 
@@ -283,6 +293,7 @@ class Server:
         self.nextIndices = dict([(server_id, len(self.log) - 1)
                                  for server_id in server_on_list
                                  if server_id != self.server_id])
+        # print('1nextIndices',self.nextIndices)
         print('send heartbeat')
         self.sendHeartbeat()
         self.heartbeat_timer = Timer(self.heartbeat_timeout, self.sendHeartbeat)
@@ -306,12 +317,15 @@ class Server:
 
         for server_id in self.server_port:
             if server_id != self.server_id and server_id in server_on_list:
+                # print("11",server_id)
                 if server_id not in self.nextIndices:
                     self.nextIndices[server_id] = 0
-
+                # print("22", server_id)
+                # print('2nextIndices', self.nextIndices)
                 self.sendAppendEntry(server_id)
 
         self.resetHeartbeatTimeout()
+
 
     def resetHeartbeatTimeout(self):
         """z
@@ -331,6 +345,7 @@ class Server:
                'PrevLogTerm': prev_log_term, 'Entries': entries, 'LeaderCommit': self.CommitIndex,
                'LeaderId': self.server_id}
         # print('send entry heartbeat %s' % entries)
+        # print('this the msg',msg)
         self.sendMessage(target_id, msg)
 
     def sendAppendEntry(self, server_id):
@@ -338,14 +353,24 @@ class Server:
         send an append entry message to the specified datacenter
         :type center_id: str
         """
+        max_num = len(self.log)
         if self.nextIndices[server_id] - 1 >= 0:
+           # print('1serverod',server_id)
+           # print("2test",self.nextIndices[server_id])
+           # print("3test11",self.log)
             prevEntry = self.log[self.nextIndices[server_id] - 1]
+
         else:
             prevEntry = self.log[0]
+
         # print(self.nextIndices)
         # print(self.CommitIndex)
         # print(prevEntry)
+
         self.appendEntry(server_id, prevEntry['index'], prevEntry['term'], self.log[self.nextIndices[server_id]])
+
+
+
 
     # msg = {'Command': 'AppendEntry', 'current_term': self.current_term, 'PrevLogIndex': prev_log_idx,
     #        'PrevLogTerm': prev_log_term, 'Entries': entries, 'CommitIndex': self.CommitIndex}
@@ -402,6 +427,7 @@ class Server:
         # print(self.CommitIndex)
 
         if self.nextIndices[follower_id] != self.CommitIndex:
+            #print('self.commitIndex',self.CommitIndex)
             self.nextIndices[follower_id] += 1
             print('update nextIndex of {} to {}'.format(follower_id, self.nextIndices[follower_id]))
 
@@ -495,7 +521,7 @@ class Server:
             client, client_address = self.server.accept()
             self.clients_con.append(client)
             print("%s:%s has connected." % client_address)
-            client.send(bytes("Welcome! Type your username and press enter to continue.", "utf8"))
+            client.send(bytes("Welcome! You are at server %s. Type your username and press enter to continue."%self.server_id, "utf8"))
             self.addresses[client] = client_address
             Thread(target=self.handle_client, args=(client,)).start()
 
@@ -587,7 +613,7 @@ class Server:
 if __name__ == "__main__":
     CONFIG = json.load(open("config.json"))
     server_on_list = CONFIG['server_on']
-    all_server_id = CONFIG['server_port'].keys()
+    all_server_id = sorted(CONFIG['server_port'].keys())
     for i in all_server_id:
         if i not in server_on_list:
             server_id = i
